@@ -76,7 +76,7 @@
  },
  "generationFeatures":[],
  "codegen":{
-  "root":"..\\D:\\Antoine\\Documents\\Code\\FRC\\2026\\test-2026CompetitiveConcept\\src\\main\\deploy\\choreo",
+  "root":"..\\..\\java\\frc\\robot\\generated",
   "genVars":true,
   "genTrajData":true,
   "useChoreoLib":true
