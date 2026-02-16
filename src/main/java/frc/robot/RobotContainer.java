@@ -19,11 +19,8 @@ import frc.robot.Constants.Driving;
 import frc.robot.commands.AutoRoutines;
 import frc.robot.commands.ManualDriveCommand;
 import frc.robot.commands.SubsystemCommands;
-import frc.robot.subsystems.Feeder;
-import frc.robot.subsystems.Floor;
-import frc.robot.subsystems.Hanger;
-import frc.robot.subsystems.Hood;
-import frc.robot.subsystems.Intake;
+// Disabled subsystems for path-planning tests: Intake, Floor, Feeder, Shooter, Hood, Hanger
+// They are intentionally not instantiated below so autos and swerve/limelight testing remain simple.
 import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Swerve;
@@ -37,39 +34,22 @@ import frc.util.SwerveTelemetry;
  */
 public class RobotContainer {
     private final Swerve swerve = new Swerve();
-    private final Intake intake = new Intake();
-    private final Floor floor = new Floor();
-    private final Feeder feeder = new Feeder();
-    private final Shooter shooter = new Shooter();
-    private final Hood hood = new Hood();
-    private final Hanger hanger = new Hanger();
+    // private final Intake intake = new Intake();
+    // private final Floor floor = new Floor();
+    // private final Feeder feeder = new Feeder();
+    // private final Shooter shooter = new Shooter();
+    // private final Hood hood = new Hood();
+    // private final Hanger hanger = new Hanger();
     private final Limelight limelight = new Limelight("limelight");
 
     private final SwerveTelemetry swerveTelemetry = new SwerveTelemetry(Driving.kMaxSpeed.in(MetersPerSecond));
     
     private final CommandXboxController driver = new CommandXboxController(0);
 
-    private final AutoRoutines autoRoutines = new AutoRoutines(
-        swerve,
-        intake,
-        floor,
-        feeder,
-        shooter,
-        hood,
-        hanger,
-        limelight
-    );
-    private final SubsystemCommands subsystemCommands = new SubsystemCommands(
-        swerve,
-        intake,
-        floor,
-        feeder,
-        shooter,
-        hood,
-        hanger,
-        () -> -driver.getLeftY(),
-        () -> -driver.getLeftX()
-    );
+    // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
+    private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
+    // SubsystemCommands (and the subsystems they depend on) are disabled for this test run.
+    // private final SubsystemCommands subsystemCommands = new SubsystemCommands(swerve);
     
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -91,17 +71,9 @@ public class RobotContainer {
         configureManualDriveBindings();
         limelight.setDefaultCommand(updateVisionCommand());
 
-        RobotModeTriggers.autonomous().or(RobotModeTriggers.teleop())
-            .onTrue(intake.homingCommand())
-            .onTrue(hanger.homingCommand());
-
-        driver.rightTrigger().whileTrue(subsystemCommands.aimAndShoot());
-        driver.rightBumper().whileTrue(subsystemCommands.shootManually());
-        driver.leftTrigger().whileTrue(intake.intakeCommand());
-        driver.leftBumper().onTrue(intake.runOnce(() -> intake.set(Intake.Position.STOWED)));
-
-        driver.povUp().onTrue(hanger.positionCommand(Hanger.Position.HANGING));
-        driver.povDown().onTrue(hanger.positionCommand(Hanger.Position.HUNG));
+        // Subsystems (intake, hanger, etc.) are commented out for path-planning tests.
+        // If you want to re-enable operator-driven subsystem commands, uncomment and
+        // restore the corresponding subsystem instances above.
     }
 
     private void configureManualDriveBindings() {
@@ -132,5 +104,24 @@ public class RobotContainer {
             });
         })
         .ignoringDisable(true);
+    }
+
+    /**
+     * Return the currently selected autonomous command (as published by AutoRoutines).
+     */
+    public Command getAutonomousCommand() {
+        // AutoRoutines should expose the selected Command via a getter named getSelected() or similar.
+        // This calls that getter and returns the Command to be scheduled by Robot.autonomousInit().
+        return autoRoutines.getSelected();
+    }
+
+    /**
+     * Get the current robot pose in meters, as estimated by odometry and vision. This is used for
+     * visualizing the robot's position on the Field2d widget on the dashboard, 
+     * and can also be used by commands that need to know the robot's current position.
+     * @return the current robot pose in meters, as estimated by odometry and vision fusion.
+     */
+    public Pose2d getPoseMeters() {
+        return swerve.getState().Pose;
     }
 }

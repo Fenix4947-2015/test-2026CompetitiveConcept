@@ -8,7 +8,9 @@ import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
@@ -18,7 +20,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  */
 public class Robot extends TimedRobot {
     private final RobotContainer m_robotContainer;
-    
+    private Command m_autonomousCommand;
+    private final Field2d m_field = new Field2d();
+
     /**
      * This function is run when the robot is first started up and should be used for any
      * initialization code.
@@ -28,6 +32,7 @@ public class Robot extends TimedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
         SmartDashboard.putData(CommandScheduler.getInstance());
+        SmartDashboard.putData("Field", m_field);
         RobotController.setBrownoutVoltage(Volts.of(6.1));
     }
     
@@ -45,5 +50,34 @@ public class Robot extends TimedRobot {
         // and running subsystem periodic() methods.  This must be called from the robot's periodic
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
+
+        // Get the latest robot pose from odometry and update the Field2d for visualization on the dashboard
+        m_field.setRobotPose(m_robotContainer.getPoseMeters());
+    }
+
+    @Override
+    public void autonomousInit() {
+        // Retrieve the selected autonomous command from the RobotContainer and schedule it
+        m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+        if (m_autonomousCommand != null) {
+            m_autonomousCommand.schedule();
+        }
+    }
+
+    @Override
+    public void teleopInit() {
+        // Ensure any running autonomous command is cancelled when teleop starts
+        if (m_autonomousCommand != null) {
+            m_autonomousCommand.cancel();
+            m_autonomousCommand = null;
+        }
+    }
+
+    @Override
+    public void disabledInit() {
+        if (m_autonomousCommand != null) {
+            m_autonomousCommand.cancel();
+            m_autonomousCommand = null;
+        }
     }
 }
