@@ -17,6 +17,7 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.io.IOException;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Floor;
 import frc.robot.subsystems.Hanger;
@@ -106,7 +108,8 @@ public final class AutoRoutines {
         availableAutos.add("Choreo 1m 13-14");
         
         // Discover PathPlanner autos and add them to the chooser/list so the dashboard shows one unified list
-        Path ppAutos = Paths.get("/deploy/pathplanner/autos");
+        File deployPath = Filesystem.getDeployDirectory();
+        Path ppAutos = Paths.get(deployPath.getAbsolutePath(),"pathplanner","autos");
         if (RobotBase.isSimulation()) {
             ppAutos = Paths.get("D:","Antoine","Documents","Code","FRC","2026","test-2026CompetitiveConcept","src","main","deploy","pathplanner","autos");
         }
