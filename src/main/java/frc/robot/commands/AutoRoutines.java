@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Floor;
 import frc.robot.subsystems.Hanger;
@@ -105,8 +106,11 @@ public final class AutoRoutines {
         availableAutos.add("Choreo 1m 13-14");
         
         // Discover PathPlanner autos and add them to the chooser/list so the dashboard shows one unified list
-        // final Path ppAutos = Paths.get("/deploy/pathplanner/autos");
-        final Path ppAutos = Paths.get("D:","Antoine","Documents","Code","FRC","2026","test-2026CompetitiveConcept","src","main","deploy","pathplanner","autos");
+        Path ppAutos = Paths.get("/deploy/pathplanner/autos");
+        if (RobotBase.isSimulation()) {
+            ppAutos = Paths.get("D:","Antoine","Documents","Code","FRC","2026","test-2026CompetitiveConcept","src","main","deploy","pathplanner","autos");
+        }
+
         if (Files.exists(ppAutos) && Files.isDirectory(ppAutos)) {
             try {
                 final List<String> ppNames = Files.list(ppAutos)
