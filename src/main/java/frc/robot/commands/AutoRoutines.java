@@ -110,9 +110,6 @@ public final class AutoRoutines {
         // Discover PathPlanner autos and add them to the chooser/list so the dashboard shows one unified list
         File deployPath = Filesystem.getDeployDirectory();
         Path ppAutos = Paths.get(deployPath.getAbsolutePath(),"pathplanner","autos");
-        if (RobotBase.isSimulation()) {
-            ppAutos = Paths.get("D:","Antoine","Documents","Code","FRC","2026","test-2026CompetitiveConcept","src","main","deploy","pathplanner","autos");
-        }
 
         if (Files.exists(ppAutos) && Files.isDirectory(ppAutos)) {
             try {
