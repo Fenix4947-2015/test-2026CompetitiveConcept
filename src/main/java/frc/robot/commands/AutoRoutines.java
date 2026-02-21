@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import static frc.robot.generated.ChoreoTraj.But;
 import static frc.robot.generated.ChoreoTraj.OutpostAndDepotTrajectory$0;
 import static frc.robot.generated.ChoreoTraj.OutpostAndDepotTrajectory$1;
 import static frc.robot.generated.ChoreoTraj.OutpostAndDepotTrajectory$2;
@@ -11,11 +12,14 @@ import static frc.robot.generated.ChoreoTraj.OutpostAndDepotTrajectory$3;
 
 import static frc.robot.generated.ChoreoTraj.choreo_1m_13_14;
 import static frc.robot.generated.ChoreoTraj.choreo_1m_13_14_slow;
+import static frc.robot.generated.ChoreoTraj.choreo_1m_15_16;
+import static frc.robot.generated.ChoreoTraj.choreo_U_15_16;
 
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.io.IOException;
 import java.io.File;
@@ -25,6 +29,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -56,7 +63,8 @@ public final class AutoRoutines {
     private final List<String> availableAutos = new ArrayList<>();
     
     private final AutoFactory autoFactory;
-    private final AutoChooser autoChooser;
+    // private final AutoChooser autoChooser;
+    private final SendableChooser<Command> autoChooser;
     
     public AutoRoutines(
         Swerve swerve,
@@ -80,7 +88,8 @@ public final class AutoRoutines {
             this.subsystemCommands = new SubsystemCommands(swerve, intake, floor, feeder, shooter, hood, hanger);
             
             this.autoFactory = swerve.createAutoFactory();
-            this.autoChooser = new AutoChooser();
+            // this.autoChooser = new AutoChooser();
+            this.autoChooser = AutoBuilder.buildAutoChooser("auto path");
     }
     
     /**
@@ -96,51 +105,62 @@ public final class AutoRoutines {
         this.hanger = null;
         this.limelight = limelight;
 
-        this.subsystemCommands = null;
+        this.subsystemCommands = new SubsystemCommands(swerve, intake, floor, feeder, shooter, hood, hanger);
         
         this.autoFactory = swerve.createAutoFactory();
-        this.autoChooser = new AutoChooser();
+        // this.autoChooser = new AutoChooser();
+        this.autoChooser = AutoBuilder.buildAutoChooser("auto path");
     }
 
     /**
      * Configure the AutoChooser with available routines. This should be called during RobotContainer initialization.
      */
     public void configure() {
-        autoChooser.addRoutine("Choreo 1m 13-14", this::choreo_1m_13_14);
-        availableAutos.add("Choreo 1m 13-14");
+        // autoChooser.addRoutine("Choreo 1m 13-14", this::choreo_1m_13_14);
+        // availableAutos.add("Choreo 1m 13-14");
         
-        autoChooser.addRoutine("Choreo 1m 13-14 Slow", this::choreo_1m_13_14_slow);
-        availableAutos.add("Choreo 1m 13-14 Slow");
+        // autoChooser.addRoutine("Choreo 1m 13-14 Slow", this::choreo_1m_13_14_slow);
+        // availableAutos.add("Choreo 1m 13-14 Slow");
+        
+        // autoChooser.addRoutine("But", this::choreo_but);
+        // availableAutos.add("But");
+        
+        // autoChooser.addRoutine("1m", this::choreo_1m);
+        // availableAutos.add("1m");
+        
+        // autoChooser.addRoutine("U", this::choreo_U);
+        // availableAutos.add("U");
         
         // Discover PathPlanner autos and add them to the chooser/list so the dashboard shows one unified list
-        File deployPath = Filesystem.getDeployDirectory();
-        Path ppAutos = Paths.get(deployPath.getAbsolutePath(),"pathplanner","autos");
+        // Discover PathPlanner autos and add them to the chooser/list so the dashboard shows one unified list
+        // File deployPath = Filesystem.getDeployDirectory();
+        // Path ppAutos = Paths.get(deployPath.getAbsolutePath(),"pathplanner","autos");
 
-        if (Files.exists(ppAutos) && Files.isDirectory(ppAutos)) {
-            try {
-                final List<String> ppNames = Files.list(ppAutos)
-                    .filter(Files::isRegularFile)
-                    .map(Path::getFileName)
-                    .map(Path::toString)
-                    .filter(n -> n.endsWith(".auto") || n.endsWith(".path"))
-                    .collect(Collectors.toList());
+        // if (Files.exists(ppAutos) && Files.isDirectory(ppAutos)) {
+        //     try {
+        //         final List<String> ppNames = Files.list(ppAutos)
+        //             .filter(Files::isRegularFile)
+        //             .map(Path::getFileName)
+        //             .map(Path::toString)
+        //             .filter(n -> n.endsWith(".auto") || n.endsWith(".path"))
+        //             .collect(Collectors.toList());
 
-                for (String name : ppNames) {
-                    // Add to available list and register a minimal routine so chooser can select it.
-                    // The AutoFactory.newRoutine(name) creates a named routine; replace with actual PathPlanner
-                    // loader if available in your AutoFactory implementation.
-                    availableAutos.add(name);
-                    autoChooser.addRoutine(name, () -> autoFactory.newRoutine(name));
-                }
-            } catch (IOException e) {
-                SmartDashboard.putString("PathPlanner Autos Error", e.getMessage());
-            }
-        }
+        //         for (String name : ppNames) {
+        //             // Add to available list and register a minimal routine so chooser can select it.
+        //             // The AutoFactory.newRoutine(name) creates a named routine; replace with actual PathPlanner
+        //             // loader if available in your AutoFactory implementation.
+        //             availableAutos.add(name);
+        //             autoChooser.addRoutine(name, () -> autoFactory.newRoutine(name));
+        //         }
+        //     } catch (IOException e) {
+        //         SmartDashboard.putString("PathPlanner Autos Error", e.getMessage());
+        //     }
+        // }
 
         // Publish a single combined list
         SmartDashboard.putData("Auto Chooser", autoChooser);
-        SmartDashboard.putStringArray("Available Autos", availableAutos.toArray(new String[0]));
-        RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+        // SmartDashboard.putStringArray("Available Autos", availableAutos.toArray(new String[0]));
+        // RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
     }
 
     private AutoRoutine choreo_1m_13_14() {
@@ -174,6 +194,58 @@ public final class AutoRoutines {
                 Commands.print("loop13_14 slow done")
             )
         );
+
+        return routine;
+    }
+
+    private AutoRoutine choreo_1m() {
+        final AutoRoutine routine = autoFactory.newRoutine("Choreo 1m");
+        final AutoTrajectory traj = choreo_1m_15_16.asAutoTraj(routine);
+
+        routine.active().onTrue(
+            Commands.sequence(
+                traj.resetOdometry(),
+                traj.cmd(),
+                Commands.print("choreo 1m done")
+            )
+        );
+
+        return routine;
+    }
+
+    private AutoRoutine choreo_U() {
+        final AutoRoutine routine = autoFactory.newRoutine("Choreo U");
+        final AutoTrajectory traj = choreo_U_15_16.asAutoTraj(routine);
+
+        routine.active().onTrue(
+            Commands.sequence(
+                traj.resetOdometry(),
+                traj.cmd(),
+                Commands.print("choreo U done")
+            )
+        );
+
+        return routine;
+    }
+
+    private AutoRoutine choreo_but() {
+        final AutoRoutine routine = autoFactory.newRoutine("But");
+        final AutoTrajectory traj = But.asAutoTraj(routine);
+
+        routine.active().onTrue(
+            Commands.sequence(
+                traj.resetOdometry(),
+                traj.cmd(),
+                Commands.print("U done")
+            )
+        );
+
+        if (subsystemCommands != null) {
+            traj.done().onTrue(
+                subsystemCommands.aim()
+                    .withTimeout(5)
+            );
+        }
 
         return routine;
     }
@@ -241,6 +313,7 @@ public final class AutoRoutines {
 
     // Expose the selected autonomous as a Command for Robot.autonomousInit() to schedule.
     public Command getSelected() {
-        return autoChooser.selectedCommandScheduler();
+        // return autoChooser.selectedCommandScheduler();
+        return autoChooser.getSelected();
     }
 }
