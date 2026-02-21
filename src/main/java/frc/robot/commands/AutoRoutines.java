@@ -10,6 +10,7 @@ import static frc.robot.generated.ChoreoTraj.OutpostAndDepotTrajectory$2;
 import static frc.robot.generated.ChoreoTraj.OutpostAndDepotTrajectory$3;
 
 import static frc.robot.generated.ChoreoTraj.choreo_1m_13_14;
+import static frc.robot.generated.ChoreoTraj.choreo_1m_13_14_slow;
 
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -107,6 +109,9 @@ public final class AutoRoutines {
         autoChooser.addRoutine("Choreo 1m 13-14", this::choreo_1m_13_14);
         availableAutos.add("Choreo 1m 13-14");
         
+        autoChooser.addRoutine("Choreo 1m 13-14 Slow", this::choreo_1m_13_14_slow);
+        availableAutos.add("Choreo 1m 13-14 Slow");
+        
         // Discover PathPlanner autos and add them to the chooser/list so the dashboard shows one unified list
         File deployPath = Filesystem.getDeployDirectory();
         Path ppAutos = Paths.get(deployPath.getAbsolutePath(),"pathplanner","autos");
@@ -142,10 +147,31 @@ public final class AutoRoutines {
         final AutoRoutine routine = autoFactory.newRoutine("Choreo 1m 13-14");
         final AutoTrajectory loop13_14 = choreo_1m_13_14.asAutoTraj(routine);
 
+
         routine.active().onTrue(
             Commands.sequence(
                 loop13_14.resetOdometry(),
-                loop13_14.cmd()
+                loop13_14.cmd(),
+                // Precise positioning using gated vision
+                // limelight != null && swerve != null
+                //     ? new MoveToPoseWithGatedVision(swerve, limelight, loop13_14.getFinalPose(), 1.0)
+                //     : Commands.none(),
+                Commands.print("loop13_14 done")
+            )
+        );
+
+        return routine;
+    }
+
+    private AutoRoutine choreo_1m_13_14_slow() {
+        final AutoRoutine routine = autoFactory.newRoutine("Choreo 1m 13-14 Slow");
+        final AutoTrajectory loop13_14_slow = choreo_1m_13_14_slow.asAutoTraj(routine);
+
+        routine.active().onTrue(
+            Commands.sequence(
+                loop13_14_slow.resetOdometry(),
+                loop13_14_slow.cmd(),
+                Commands.print("loop13_14 slow done")
             )
         );
 

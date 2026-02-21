@@ -27,14 +27,14 @@ public record ChoreoTraj(
     public static final ChoreoTraj choreo_1m_13_14 = new ChoreoTraj(
 	    "choreo_1m_13_14",
 	    OptionalInt.empty(),
-	    1.92402,
+	    1.33247,
 	    new Pose2d(14.8, 7.4, Rotation2d.fromRadians(0)),
 	    new Pose2d(14.8, 7.4, Rotation2d.fromRadians(0))
 	);
 	public static final ChoreoTraj OutpostAndDepotTrajectory = new ChoreoTraj(
 	    "OutpostAndDepotTrajectory",
 	    OptionalInt.empty(),
-	    11.35632,
+	    11.05335,
 	    new Pose2d(3.598, 0.64, Rotation2d.fromRadians(3.142)),
 	    new Pose2d(0.941, 3.564, Rotation2d.fromRadians(3.142))
 	);
@@ -48,23 +48,30 @@ public record ChoreoTraj(
 	public static final ChoreoTraj OutpostAndDepotTrajectory$1 = new ChoreoTraj(
 	    "OutpostAndDepotTrajectory",
 	    OptionalInt.of(1),
-	    3.40099,
+	    3.401,
 	    new Pose2d(0.581, 0.669, Rotation2d.fromRadians(3.142)),
-	    new Pose2d(0.668, 5.964, Rotation2d.fromRadians(3.142))
+	    new Pose2d(0.668, 5.964, Rotation2d.fromRadians(-3.142))
 	);
 	public static final ChoreoTraj OutpostAndDepotTrajectory$2 = new ChoreoTraj(
 	    "OutpostAndDepotTrajectory",
 	    OptionalInt.of(2),
-	    2.5827999999999998,
-	    new Pose2d(0.668, 5.964, Rotation2d.fromRadians(3.142)),
+	    2.3544400000000003,
+	    new Pose2d(0.668, 5.964, Rotation2d.fromRadians(-3.142)),
 	    new Pose2d(2.498, 4.035, Rotation2d.fromRadians(0))
 	);
 	public static final ChoreoTraj OutpostAndDepotTrajectory$3 = new ChoreoTraj(
 	    "OutpostAndDepotTrajectory",
 	    OptionalInt.of(3),
-	    3.55511,
+	    3.4804899999999996,
 	    new Pose2d(2.498, 4.035, Rotation2d.fromRadians(0)),
 	    new Pose2d(0.941, 3.564, Rotation2d.fromRadians(3.142))
+	);
+	public static final ChoreoTraj choreo_1m_13_14_slow = new ChoreoTraj(
+	    "choreo_1m_13_14_slow",
+	    OptionalInt.empty(),
+	    1.85315,
+	    new Pose2d(14.8, 7.4, Rotation2d.fromRadians(0)),
+	    new Pose2d(14.8, 7.4, Rotation2d.fromRadians(0))
 	);
 
     /**
@@ -77,7 +84,8 @@ public record ChoreoTraj(
 		Map.entry("OutpostAndDepotTrajectory$0", OutpostAndDepotTrajectory$0),
 		Map.entry("OutpostAndDepotTrajectory$1", OutpostAndDepotTrajectory$1),
 		Map.entry("OutpostAndDepotTrajectory$2", OutpostAndDepotTrajectory$2),
-		Map.entry("OutpostAndDepotTrajectory$3", OutpostAndDepotTrajectory$3)
+		Map.entry("OutpostAndDepotTrajectory$3", OutpostAndDepotTrajectory$3),
+		Map.entry("choreo_1m_13_14_slow", choreo_1m_13_14_slow)
     );
 
     /**
