@@ -7,9 +7,11 @@ package frc.robot;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import java.util.Optional;
+import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -19,6 +21,8 @@ import frc.robot.Constants.Driving;
 import frc.robot.commands.AutoRoutines;
 import frc.robot.commands.ManualDriveCommand;
 import frc.robot.commands.SubsystemCommands;
+import frc.robot.subsystems.Floor;
+import frc.robot.subsystems.Hanger;
 // Disabled subsystems for path-planning tests: Intake, Floor, Feeder, Shooter, Hood, Hanger
 // They are intentionally not instantiated below so autos and swerve/limelight testing remain simple.
 import frc.robot.subsystems.Limelight;
@@ -49,7 +53,17 @@ public class RobotContainer {
     // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
     private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
     // SubsystemCommands (and the subsystems they depend on) are disabled for this test run.
-    // private final SubsystemCommands subsystemCommands = new SubsystemCommands(swerve);
+    private final SubsystemCommands subsystemCommands = new SubsystemCommands(
+        swerve,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        () -> -driver.getLeftY(), 
+        () -> -driver.getLeftX()
+        );
     
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -89,6 +103,8 @@ public class RobotContainer {
         driver.x().onTrue(Commands.runOnce(() -> manualDriveCommand.setLockedHeading(Rotation2d.kCCW_90deg)));
         driver.y().onTrue(Commands.runOnce(() -> manualDriveCommand.setLockedHeading(Rotation2d.kZero)));
         driver.back().onTrue(Commands.runOnce(() -> manualDriveCommand.seedFieldCentric()));
+        // driver.rightTrigger().whileTrue(subsystemCommands.aim());   // tester si cette ligne fonctionne ou la suivante pour enligner le robot vers le but
+        driver.rightTrigger().whileTrue(Commands.run(() -> manualDriveCommand.setLockedHeading(Landmarks.getDirectionToHub(swerve))));
     }
 
     private Command updateVisionCommand() {
