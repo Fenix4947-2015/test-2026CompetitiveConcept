@@ -121,7 +121,7 @@ public class RobotContainer {
         try {
             // Semi-auto path
             Command testPath = AutoBuilder.pathfindThenFollowPath(
-                PathPlannerPath.fromPathFile("pp_choreo_1m_15_16"),
+                PathPlannerPath.fromPathFile("semi_auto"),
                 new PathConstraints(4.0, 3.5, 6, 3)
                 );
             driver.leftTrigger().whileTrue(testPath);
@@ -157,7 +157,7 @@ public class RobotContainer {
         final SendableChooser<Command> autoChooser;
         //TODO ajouter un délais variable avant chaque auto
 
-        NamedCommands.registerCommand("Aim and Shoot", subsystemCommands.aimAndShoot());
+        NamedCommands.registerCommand("Aim and Shoot", subsystemCommands.aim());
         // NamedCommands.registerCommand("toggle side gripper",new InstantCommand(m_coralGripper::toggleSideGripper, m_coralGripper));
         // NamedCommands.registerCommand("auto dunk coral right", autoDropCoralRight);
         // NamedCommands.registerCommand("auto dunk coral left", autoDropCoralLeft);
