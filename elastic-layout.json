@@ -43,10 +43,10 @@
           },
           {
             "title": "Field",
-            "x": 512.0,
+            "x": 384.0,
             "y": 0.0,
-            "width": 1408.0,
-            "height": 640.0,
+            "width": 1024.0,
+            "height": 512.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Field",
@@ -64,8 +64,8 @@
           },
           {
             "title": "Robot",
-            "x": 512.0,
-            "y": 640.0,
+            "x": 384.0,
+            "y": 512.0,
             "width": 256.0,
             "height": 128.0,
             "type": "Text Display",
@@ -74,6 +74,33 @@
               "period": 0.06,
               "data_type": "double[]",
               "show_submit_button": false
+            }
+          },
+          {
+            "title": "Auto Delay",
+            "x": 0.0,
+            "y": 384.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Auto Delay",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Auto Mode",
+            "x": 0.0,
+            "y": 256.0,
+            "width": 384.0,
+            "height": 128.0,
+            "type": "ComboBox Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/Auto Mode",
+              "period": 0.06,
+              "sort_options": false
             }
           }
         ]
