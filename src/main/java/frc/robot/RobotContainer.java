@@ -11,6 +11,8 @@ import java.util.function.DoubleSupplier;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -115,6 +117,25 @@ public class RobotContainer {
         driver.back().onTrue(Commands.runOnce(() -> manualDriveCommand.seedFieldCentric()));
         // driver.rightTrigger().whileTrue(subsystemCommands.aim());   // tester si cette ligne fonctionne ou la suivante pour enligner le robot vers le but
         driver.rightTrigger().whileTrue(Commands.run(() -> manualDriveCommand.setLockedHeading(Landmarks.getDirectionToHub(swerve))));
+
+        try {
+            // Semi-auto path
+            Command testPath = AutoBuilder.pathfindThenFollowPath(
+                PathPlannerPath.fromPathFile("pp_choreo_1m_15_16"),
+                new PathConstraints(4.0, 3.5, 6, 3)
+                );
+            driver.leftTrigger().whileTrue(testPath);
+            //TODO You should never allow a path to start if pose estimate is garbage.
+            // Commands.either(
+            //     scorePath,
+            //     Commands.print("Pose not valid"),
+            //     () -> swerve.isPoseReliable()
+            // )
+        }
+        catch (Exception e) {
+            System.out.println("Error loading path: " + e.getMessage());
+        }
+
     }
 
     private Command updateVisionCommand() {

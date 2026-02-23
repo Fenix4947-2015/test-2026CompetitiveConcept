@@ -3,7 +3,12 @@ package frc.robot.subsystems;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import choreo.Choreo.TrajectoryLogger;
 import choreo.auto.AutoFactory;
@@ -13,6 +18,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -46,6 +52,47 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             TunerConstants.FrontRight, 
             TunerConstants.BackLeft, 
             TunerConstants.BackRight
+        );
+
+
+        // Load the RobotConfig from the GUI settings. You should probably
+        // store this in your Constants file
+        RobotConfig config = null;
+        try{
+            config = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            // Handle exception as needed
+            e.printStackTrace();
+        }
+
+        // Configure AutoBuilder last
+        AutoBuilder.configure(
+            () -> getState().Pose, // Robot pose supplier
+            this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
+            () -> getState().Speeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> setControl( // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+                pathFieldSpeedsRequest.withSpeeds(speeds)
+                    .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                    .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                    .withDriveRequestType(DriveRequestType.Velocity)
+            ),
+            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
+                    new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            ),
+            config, // The robot configuration
+            () -> {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            var alliance = DriverStation.getAlliance();
+            if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+            }
+            return false;
+            },
+            this // Reference to this subsystem to set requirements
         );
     }
 
@@ -170,5 +217,38 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         Matrix<N3, N1> visionMeasurementStdDevs
     ) {
         super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
+    }
+
+    //TODO travail en cours, ne pas utiliser pour l'instant
+    public void driveToPose(Pose2d target, double maxLinearSpeed, double maxAngularSpeed, double positionTolerance, double angleTolerance) {
+        // Enable continuous input for theta controller
+        pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+        Pose2d currentPose = getState().Pose;
+
+        // Calculate errors
+        double xError = target.getX() - currentPose.getX();
+        double yError = target.getY() - currentPose.getY();
+        double thetaError = target.getRotation().minus(currentPose.getRotation()).getRadians();
+
+        // PID calculations
+        double xControl = pathXController.calculate(currentPose.getX(), target.getX());
+        double yControl = pathYController.calculate(currentPose.getY(), target.getY());
+        double thetaControl = pathThetaController.calculate(currentPose.getRotation().getRadians(), target.getRotation().getRadians());
+
+        // Clamp speeds to max values
+        double vx = Math.max(Math.min(xControl, maxLinearSpeed), -maxLinearSpeed);
+        double vy = Math.max(Math.min(yControl, maxLinearSpeed), -maxLinearSpeed);
+        double omega = Math.max(Math.min(thetaControl, maxAngularSpeed), -maxAngularSpeed);
+
+        // Build field-centric request
+        setControl(pathFieldSpeedsRequest.withSpeeds(new ChassisSpeeds(vx, vy, omega)));
+
+        // Optionally, stop if within tolerance (for blocking use)
+        if (Math.abs(xError) < positionTolerance &&
+            Math.abs(yError) < positionTolerance &&
+            Math.abs(thetaError) < angleTolerance) {
+            setControl(pathFieldSpeedsRequest.withSpeeds(new ChassisSpeeds(0, 0, 0)));
+        }
     }
 }
