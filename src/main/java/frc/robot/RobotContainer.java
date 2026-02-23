@@ -9,11 +9,17 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -50,6 +56,10 @@ public class RobotContainer {
     
     private final CommandXboxController driver = new CommandXboxController(0);
 
+    /* Autos */
+    private final SendableChooser<Command> autoChooser;
+    public double auto_delay = 0.0;
+
     // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
     private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
     // SubsystemCommands (and the subsystems they depend on) are disabled for this test run.
@@ -68,7 +78,7 @@ public class RobotContainer {
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
         configureBindings();
-        autoRoutines.configure();
+        autoChooser = buildAutoChooser();
         swerve.registerTelemetry(swerveTelemetry::telemeterize);
     }
     
@@ -122,13 +132,33 @@ public class RobotContainer {
         .ignoringDisable(true);
     }
 
+    private SendableChooser<Command> buildAutoChooser() {
+        final SendableChooser<Command> autoChooser;
+        //TODO ajouter un délais variable avant chaque auto
+
+        NamedCommands.registerCommand("Aim and Shoot", subsystemCommands.aimAndShoot());
+        // NamedCommands.registerCommand("toggle side gripper",new InstantCommand(m_coralGripper::toggleSideGripper, m_coralGripper));
+        // NamedCommands.registerCommand("auto dunk coral right", autoDropCoralRight);
+        // NamedCommands.registerCommand("auto dunk coral left", autoDropCoralLeft);
+        // NamedCommands.registerCommand("auto get coral station 1",autoPickupCoralStation1);
+        // NamedCommands.registerCommand("Arm L4",m_moveArmL4);
+        // NamedCommands.registerCommand("Arm Lowest",m_moveArmLow);
+        // NamedCommands.registerCommand("Grip Coral",gripCoral);
+        // NamedCommands.registerCommand("Auto Delay",new WaitSmartDashBoard(smartDashboardSettings));
+        // NamedCommands.registerCommand("Set Mega Tag",new SetMegaTag(limelightFour, drivetrain));
+        // NamedCommands.registerCommand("Set Mega Tag 2",new SetMegaTag2(limelightFour, drivetrain));
+        // NamedCommands.registerCommand("Set No Camera",new SetNoCamera(limelightFour, drivetrain));
+        autoChooser = AutoBuilder.buildAutoChooser("auto_path");
+        SmartDashboard.putData("Auto Mode", autoChooser);
+        SmartDashboard.putNumber("Auto Delay", auto_delay);
+        return autoChooser;
+    }
+
     /**
-     * Return the currently selected autonomous command (as published by AutoRoutines).
+     * Return the currently selected autonomous command.
      */
     public Command getAutonomousCommand() {
-        // AutoRoutines should expose the selected Command via a getter named getSelected() or similar.
-        // This calls that getter and returns the Command to be scheduled by Robot.autonomousInit().
-        return autoRoutines.getSelected();
+        return autoChooser.getSelected();
     }
 
     /**
