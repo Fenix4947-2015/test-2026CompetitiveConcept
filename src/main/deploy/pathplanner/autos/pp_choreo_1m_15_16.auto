@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "path_planner_1m_13_14"
+            "pathName": "choreo_1m_15_16"
           }
         }
       ]
@@ -15,5 +15,5 @@
   },
   "resetOdom": true,
   "folder": null,
-  "choreoAuto": false
+  "choreoAuto": true
 }

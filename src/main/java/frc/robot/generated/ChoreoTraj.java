@@ -24,7 +24,14 @@ public record ChoreoTraj(
     Pose2d initialPoseBlue,
     Pose2d endPoseBlue
 ) {
-    public static final ChoreoTraj choreo_1m_13_14 = new ChoreoTraj(
+    public static final ChoreoTraj But = new ChoreoTraj(
+	    "But",
+	    OptionalInt.empty(),
+	    1.36156,
+	    new Pose2d(15.352, 7.338, Rotation2d.fromRadians(0)),
+	    new Pose2d(13.919, 5.011, Rotation2d.fromRadians(-2.115))
+	);
+	public static final ChoreoTraj choreo_1m_13_14 = new ChoreoTraj(
 	    "choreo_1m_13_14",
 	    OptionalInt.empty(),
 	    1.55943,
@@ -37,6 +44,20 @@ public record ChoreoTraj(
 	    20.20408,
 	    new Pose2d(14.8, 7.4, Rotation2d.fromRadians(0)),
 	    new Pose2d(14.8, 7.4, Rotation2d.fromRadians(0))
+	);
+	public static final ChoreoTraj choreo_1m_15_16 = new ChoreoTraj(
+	    "choreo_1m_15_16",
+	    OptionalInt.empty(),
+	    0.77972,
+	    new Pose2d(14.5, 4.3, Rotation2d.fromRadians(0)),
+	    new Pose2d(13.5, 4.3, Rotation2d.fromRadians(0))
+	);
+	public static final ChoreoTraj choreo_U_15_16 = new ChoreoTraj(
+	    "choreo_U_15_16",
+	    OptionalInt.empty(),
+	    2.276,
+	    new Pose2d(13.5, 4.3, Rotation2d.fromRadians(0)),
+	    new Pose2d(14.5, 4.3, Rotation2d.fromRadians(0))
 	);
 	public static final ChoreoTraj OutpostAndDepotTrajectory = new ChoreoTraj(
 	    "OutpostAndDepotTrajectory",
@@ -73,43 +94,22 @@ public record ChoreoTraj(
 	    new Pose2d(2.498, 4.035, Rotation2d.fromRadians(0)),
 	    new Pose2d(0.941, 3.564, Rotation2d.fromRadians(3.142))
 	);
-	public static final ChoreoTraj But = new ChoreoTraj(
-	    "But",
-	    OptionalInt.empty(),
-	    1.36156,
-	    new Pose2d(15.352, 7.338, Rotation2d.fromRadians(0)),
-	    new Pose2d(13.919, 5.011, Rotation2d.fromRadians(-2.115))
-	);
-	public static final ChoreoTraj choreo_1m_15_16 = new ChoreoTraj(
-	    "choreo_1m_15_16",
-	    OptionalInt.empty(),
-	    0.77972,
-	    new Pose2d(14.5, 4.3, Rotation2d.fromRadians(0)),
-	    new Pose2d(13.5, 4.3, Rotation2d.fromRadians(0))
-	);
-	public static final ChoreoTraj choreo_U_15_16 = new ChoreoTraj(
-	    "choreo_U_15_16",
-	    OptionalInt.empty(),
-	    2.276,
-	    new Pose2d(13.5, 4.3, Rotation2d.fromRadians(0)),
-	    new Pose2d(14.5, 4.3, Rotation2d.fromRadians(0))
-	);
 
     /**
      * A map between trajectory names and their corresponding data.
      * This allows for trajectory data to be looked up with strings during runtime.
      */
     public static final Map<String, ChoreoTraj> ALL_TRAJECTORIES = Map.ofEntries(
-    	Map.entry("choreo_1m_13_14", choreo_1m_13_14),
+    	Map.entry("But", But),
+		Map.entry("choreo_1m_13_14", choreo_1m_13_14),
 		Map.entry("choreo_1m_13_14_slow", choreo_1m_13_14_slow),
+		Map.entry("choreo_1m_15_16", choreo_1m_15_16),
+		Map.entry("choreo_U_15_16", choreo_U_15_16),
 		Map.entry("OutpostAndDepotTrajectory", OutpostAndDepotTrajectory),
 		Map.entry("OutpostAndDepotTrajectory$0", OutpostAndDepotTrajectory$0),
 		Map.entry("OutpostAndDepotTrajectory$1", OutpostAndDepotTrajectory$1),
 		Map.entry("OutpostAndDepotTrajectory$2", OutpostAndDepotTrajectory$2),
-		Map.entry("OutpostAndDepotTrajectory$3", OutpostAndDepotTrajectory$3),
-		Map.entry("But", But),
-		Map.entry("choreo_1m_15_16", choreo_1m_15_16),
-		Map.entry("choreo_U_15_16", choreo_U_15_16)
+		Map.entry("OutpostAndDepotTrajectory$3", OutpostAndDepotTrajectory$3)
     );
 
     /**
