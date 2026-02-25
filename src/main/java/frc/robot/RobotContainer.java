@@ -17,6 +17,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -135,6 +136,14 @@ public class RobotContainer {
         catch (Exception e) {
             System.out.println("Error loading path: " + e.getMessage());
         }
+
+        //TODO utiliser la version flipped
+        Command goThrench = AutoBuilder.pathfindToPose(
+            new Pose2d(11.9, 7.4, Rotation2d.k180deg),
+            new PathConstraints(0.5, 0.5, 1, 1),
+            MetersPerSecond.of(0)
+        );
+        driver.leftBumper().whileTrue(goThrench);
 
     }
 
