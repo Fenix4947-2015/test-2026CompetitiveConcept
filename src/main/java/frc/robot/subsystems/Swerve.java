@@ -36,11 +36,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-    /** Swerve request to apply during field-centric path following */
+    /* Swerve request to apply during field-centric path following */
     private final SwerveRequest.ApplyFieldSpeeds pathFieldSpeedsRequest = new SwerveRequest.ApplyFieldSpeeds();
     private final PIDController pathXController = new PIDController(10, 0, 0);
     private final PIDController pathYController = new PIDController(10, 0, 0);
     private final PIDController pathThetaController = new PIDController(7, 0, 0);
+    
+    /* Near zero speed monitoring */
+    private static final double kTranslationalThreshold = 0.05;  // m/s
+    private static final double kRotationalThreshold = 0.05;     // rad/s (~3 deg/s)
+    private static final int kSettledCyclesRequired = 5;         // 100ms at 20ms loop
+    private ChassisSpeeds previousSpeeds = new ChassisSpeeds();
+    private int nearZeroCycleCount = 0;
 
     public Swerve() {
         super(
@@ -250,5 +257,34 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             Math.abs(thetaError) < angleTolerance) {
             setControl(pathFieldSpeedsRequest.withSpeeds(new ChassisSpeeds(0, 0, 0)));
         }
+    }
+
+    public boolean isNearZeroVelocity() {
+
+        ChassisSpeeds speeds = getState().Speeds;
+
+        double ax = (speeds.vxMetersPerSecond - previousSpeeds.vxMetersPerSecond) / 0.02;
+        double ay = (speeds.vyMetersPerSecond - previousSpeeds.vyMetersPerSecond) / 0.02;
+        double alpha = (speeds.omegaRadiansPerSecond - previousSpeeds.omegaRadiansPerSecond) / 0.02;
+
+        previousSpeeds = speeds;
+
+        boolean lowVelocity =
+                Math.abs(speeds.vxMetersPerSecond) < kTranslationalThreshold &&
+                Math.abs(speeds.vyMetersPerSecond) < kTranslationalThreshold &&
+                Math.abs(speeds.omegaRadiansPerSecond) < kRotationalThreshold;
+
+        boolean lowAcceleration =
+                Math.abs(ax) < 0.5 &&
+                Math.abs(ay) < 0.5 &&
+                Math.abs(alpha) < 1.0;
+
+        if (lowVelocity && lowAcceleration) {
+            nearZeroCycleCount++;
+        } else {
+            nearZeroCycleCount = 0;
+        }
+
+        return nearZeroCycleCount >= kSettledCyclesRequired;
     }
 }
