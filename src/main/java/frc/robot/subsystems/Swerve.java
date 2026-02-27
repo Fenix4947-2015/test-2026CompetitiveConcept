@@ -38,6 +38,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /* Swerve request to apply during field-centric path following */
     private final SwerveRequest.ApplyFieldSpeeds pathFieldSpeedsRequest = new SwerveRequest.ApplyFieldSpeeds();
+    private final SwerveRequest.ApplyRobotSpeeds pathRobotSpeedsRequest = new SwerveRequest.ApplyRobotSpeeds();
     private final PIDController pathXController = new PIDController(10, 0, 0);
     private final PIDController pathYController = new PIDController(10, 0, 0);
     private final PIDController pathThetaController = new PIDController(7, 0, 0);
@@ -78,7 +79,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
             () -> getState().Speeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             (speeds, feedforwards) -> setControl( // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
-                pathFieldSpeedsRequest.withSpeeds(speeds)
+                pathRobotSpeedsRequest.withSpeeds(speeds)
                     .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                     .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                     .withDriveRequestType(DriveRequestType.Velocity)
@@ -162,7 +163,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         );
 
         setControl(
-            pathFieldSpeedsRequest.withSpeeds(targetSpeeds)
+            pathRobotSpeedsRequest.withSpeeds(targetSpeeds)
                 .withWheelForceFeedforwardsX(sample.moduleForcesX())
                 .withWheelForceFeedforwardsY(sample.moduleForcesY())
         );
