@@ -122,8 +122,8 @@ public class RobotContainer {
         try {
             // Semi-auto path
             Command testPath = AutoBuilder.pathfindThenFollowPath(
-                PathPlannerPath.fromPathFile("semi_auto"),
-                new PathConstraints(4.0, 3.5, 6, 3)
+                PathPlannerPath.fromPathFile("climb2hub_aim"),
+                new PathConstraints(0.2, 0.1, 0.1, 0.1)
                 );
             driver.leftTrigger().whileTrue(testPath);
             //TODO You should never allow a path to start if pose estimate is garbage.
@@ -139,8 +139,8 @@ public class RobotContainer {
 
         //TODO utiliser la version flipped
         Command goThrench = AutoBuilder.pathfindToPose(
-            new Pose2d(11.9, 7.4, Rotation2d.k180deg),
-            new PathConstraints(0.5, 0.5, 1, 1),
+            new Pose2d(13.3, 7.4, Rotation2d.k180deg),
+            new PathConstraints(0.1, 0.1, 0.1, 0.1),
             MetersPerSecond.of(0)
         );
         driver.leftBumper().whileTrue(goThrench);
