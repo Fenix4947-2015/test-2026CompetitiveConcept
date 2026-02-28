@@ -6,6 +6,11 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -18,7 +23,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * the TimedRobot documentation. If you change the name of this class or the package after creating
  * this project, you must also update the Main.java file in the project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot  {
     private final RobotContainer m_robotContainer;
     private Command m_autonomousCommand;
     private final Field2d m_field = new Field2d();
@@ -53,6 +58,14 @@ public class Robot extends TimedRobot {
 
         // Get the latest robot pose from odometry and update the Field2d for visualization on the dashboard
         m_field.setRobotPose(m_robotContainer.getPoseMeters());
+    }
+
+    @Override
+    public void robotInit() {
+
+        Logger.addDataReceiver(new WPILOGWriter());   // writes .wpilog file
+        Logger.addDataReceiver(new NT4Publisher());   // streams live to NT
+        Logger.start();
     }
 
     @Override
