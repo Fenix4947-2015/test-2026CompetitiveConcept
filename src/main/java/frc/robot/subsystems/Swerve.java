@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -191,6 +193,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+        // Debug loss of position ----------------------------------
+        // double pigeonYawDeg = this.getPigeon2().getYaw().getValueAsDouble();
+        // Logger.recordOutput("Localization/PigeonYawDeg", pigeonYawDeg);
+
+        // Rotation2d odometryRot = getState().Pose.getRotation();
+        // Logger.recordOutput(
+        //     "Localization/OdometryYawDeg",
+        //     odometryRot.getDegrees()
+        // );
+        //----------------------------------------------------------
     }
 
     /**

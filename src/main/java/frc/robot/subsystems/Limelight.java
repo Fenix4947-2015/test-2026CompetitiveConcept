@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import java.util.Optional;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -61,5 +63,23 @@ public class Limelight extends SubsystemBase {
             this.poseEstimate = poseEstimate;
             this.standardDeviations = standardDeviations;
         }
+    }
+
+    @Override
+    public void periodic() {
+
+        /// Debug robot loss of pose -----------------------------------------
+        // double[] botpose = this.telemetryTable.getEntry("botpose_wpiblue").getDoubleArray(new double[6]);
+
+        // // botpose format:
+        // // [x, y, z, roll, pitch, yaw] in meters + degrees
+
+        // double llYawDeg = botpose[5];
+
+        // Logger.recordOutput(
+        //     "Localization/LimelightYawDeg",
+        //     llYawDeg
+        // );
+        // ---------------------------------------------------------------------
     }
 }
