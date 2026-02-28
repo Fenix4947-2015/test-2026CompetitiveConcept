@@ -143,7 +143,7 @@ public class RobotContainer {
             //     scorePath,
             //     Commands.print("Pose not valid"),
             //     () -> swerve.isPoseReliable()
-            // )
+            // );
         }
         catch (Exception e) {
             System.out.println("Error loading path: " + e.getMessage());
@@ -154,12 +154,12 @@ public class RobotContainer {
 
         //TODO utiliser la version flipped
         Command goThrenchCenterRedLeft = AutoBuilder.pathfindToPose(
-            new Pose2d(10, 0.8, Rotation2d.kZero),   // Rouge gauche
+            new Pose2d(10, 0.6, Rotation2d.fromDegrees(90)),   // Rouge gauche
             pathConstraints,
             trenchSemiAuto
         );
         Command goThrenchCenterRedRight = AutoBuilder.pathfindToPose(
-            new Pose2d(10, 7.3, Rotation2d.k180deg),  // Rouge droite
+            new Pose2d(10, 7.4, Rotation2d.fromDegrees(-90)),  // Rouge droite
             pathConstraints,
             trenchSemiAuto
             );
@@ -182,8 +182,6 @@ public class RobotContainer {
             GoTrench.NONE, Commands.none()
         );
 
-        // BooleanSupplier eitherLeftRightRed = () -> swerve.getState().Pose.getY() < 4;
-
         Supplier<GoTrench> goTrenchSelector = () -> {
             Pose2d p = swerve.getState().Pose;
             if (p.getX() > 12) {  // in goal zone, go to center
@@ -202,11 +200,6 @@ public class RobotContainer {
         };
 
         Command enableTrenchSemiAuto = Commands.select(goTrenchCommandMap, goTrenchSelector);
-
-        // Command goCenterRed = Commands.either(
-        //     goThrenchCenterRedLeft,
-        //     goThrenchCenterRedRight,
-        //     eitherLeftRightRed);
         driver.leftBumper().whileTrue(enableTrenchSemiAuto);
 
     }
