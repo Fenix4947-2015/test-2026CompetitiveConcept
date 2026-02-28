@@ -6,8 +6,11 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -62,6 +65,15 @@ public class RobotContainer {
     /* Autos */
     private final SendableChooser<Command> autoChooser;
     public double auto_delay = 0.0;
+
+    // Semi-Autos
+    private enum GoTrench {
+        GO_LEFT_CENTER,
+        GO_RIGHT_CENTER,
+        GO_LEFT_GOAL,
+        GO_RIGHT_GOAL,
+        NONE,
+    }
 
     // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
     private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
@@ -137,13 +149,65 @@ public class RobotContainer {
             System.out.println("Error loading path: " + e.getMessage());
         }
 
+        PathConstraints pathConstraints = new PathConstraints(2,2,2,2);
+        LinearVelocity trenchSemiAuto = MetersPerSecond.of(1);
+
         //TODO utiliser la version flipped
-        Command goThrench = AutoBuilder.pathfindToPose(
-            new Pose2d(13.3, 7.4, Rotation2d.k180deg),
-            new PathConstraints(0.1, 0.1, 0.1, 0.1),
-            MetersPerSecond.of(0)
+        Command goThrenchCenterRedLeft = AutoBuilder.pathfindToPose(
+            new Pose2d(10, 0.8, Rotation2d.kZero),   // Rouge gauche
+            pathConstraints,
+            trenchSemiAuto
         );
-        driver.leftBumper().whileTrue(goThrench);
+        Command goThrenchCenterRedRight = AutoBuilder.pathfindToPose(
+            new Pose2d(10, 7.3, Rotation2d.k180deg),  // Rouge droite
+            pathConstraints,
+            trenchSemiAuto
+            );
+        Command goThrenchGoalRedLeft = AutoBuilder.pathfindToPose(
+            new Pose2d(14, 1.635, Rotation2d.fromDegrees(130)),   // Rouge gauche
+            pathConstraints,
+            trenchSemiAuto
+        );
+        Command goThrenchGoalRedRight = AutoBuilder.pathfindToPose(
+            new Pose2d(14, 6.365, Rotation2d.fromDegrees(50)),   // Rouge droite
+            pathConstraints,
+            trenchSemiAuto
+        );
+
+        Map<GoTrench,Command> goTrenchCommandMap = Map.of(
+            GoTrench.GO_LEFT_CENTER, goThrenchCenterRedLeft,
+            GoTrench.GO_RIGHT_CENTER, goThrenchCenterRedRight,
+            GoTrench.GO_LEFT_GOAL, goThrenchGoalRedLeft,
+            GoTrench.GO_RIGHT_GOAL, goThrenchGoalRedRight,
+            GoTrench.NONE, Commands.none()
+        );
+
+        // BooleanSupplier eitherLeftRightRed = () -> swerve.getState().Pose.getY() < 4;
+
+        Supplier<GoTrench> goTrenchSelector = () -> {
+            Pose2d p = swerve.getState().Pose;
+            if (p.getX() > 12) {  // in goal zone, go to center
+                if (p.getY() < 4) {
+                    return GoTrench.GO_LEFT_CENTER;
+                } else {
+                    return GoTrench.GO_RIGHT_CENTER;
+                }
+            } else {  // in center zone, go to goal zone
+                if (p.getY() < 4) {
+                    return GoTrench.GO_LEFT_GOAL;
+                } else {
+                    return GoTrench.GO_RIGHT_GOAL;
+                }
+            }
+        };
+
+        Command enableTrenchSemiAuto = Commands.select(goTrenchCommandMap, goTrenchSelector);
+
+        // Command goCenterRed = Commands.either(
+        //     goThrenchCenterRedLeft,
+        //     goThrenchCenterRedRight,
+        //     eitherLeftRightRed);
+        driver.leftBumper().whileTrue(enableTrenchSemiAuto);
 
     }
 
