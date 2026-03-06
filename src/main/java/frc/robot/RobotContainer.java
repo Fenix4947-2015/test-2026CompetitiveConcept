@@ -12,14 +12,19 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -38,6 +43,7 @@ import frc.robot.subsystems.Hanger;
 // Disabled subsystems for path-planning tests: Intake, Floor, Feeder, Shooter, Hood, Hanger
 // They are intentionally not instantiated below so autos and swerve/limelight testing remain simple.
 import frc.robot.subsystems.Limelight;
+import frc.robot.subsystems.Limelight.VisionMeasurement;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Swerve;
 import frc.util.SwerveTelemetry;
@@ -74,6 +80,10 @@ public class RobotContainer {
         GO_RIGHT_GOAL,
         NONE,
     }
+
+    // Vision updates
+    private int consistentFrames = 0;
+    private static final int REQUIRED_FRAMES = 3; // Number of consecutive frames with a valid measurement required to consider the pose estimate reliable.
 
     // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
     private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
@@ -206,17 +216,74 @@ public class RobotContainer {
 
     private Command updateVisionCommand() {
         return limelight.run(() -> {
-            final Pose2d currentRobotPose = swerve.getState().Pose;
-            final Optional<Limelight.Measurement> measurement = limelight.getMeasurement(currentRobotPose);
-            measurement.ifPresent(m -> {
-                swerve.addVisionMeasurement(
-                    m.poseEstimate.pose, 
-                    m.poseEstimate.timestampSeconds,
-                    m.standardDeviations
-                );
-            });
+            final SwerveDriveState currentRobotState = swerve.getState();
+            processVision(currentRobotState.Pose, currentRobotState.Speeds);
+
+            // if (translationError > 3.0 && m.tagCount >= 2) {
+            //     estimator.resetPosition(
+            //         gyroRotation,
+            //         modulePositions,
+            //         m.pose
+            //     );
+            // }
         })
         .ignoringDisable(true);
+    }
+
+    private void processVision(
+            Pose2d currentPose,
+            ChassisSpeeds speeds) {
+
+        Optional<VisionMeasurement> raw =
+            limelight.getRawMeasurement(currentPose);
+
+        if (raw.isEmpty()) {
+            consistentFrames = 0;
+            return;
+        }
+        
+        Optional<VisionMeasurement> filteredOutlier = limelight.filterOutlierMeasurement(raw.get(), currentPose);
+        if (filteredOutlier.isEmpty()) {
+            consistentFrames = 0;
+            return;
+        }
+
+        VisionMeasurement m = filteredOutlier.get();
+        double translationError =
+            m.pose.getTranslation()
+                .getDistance(currentPose.getTranslation());
+
+        // ----------------------------
+        // Reseed condition in case we get lost or when we start the robot.
+        // ----------------------------
+        if (translationError > 3.0 && m.tagCount >= 2) {
+            swerve.resetPose(m.pose);
+            consistentFrames = 0;
+            return;
+        }
+
+        Optional<VisionMeasurement> filtered =
+            limelight.filterMeasurement(filteredOutlier.get(), currentPose);
+
+        if (filtered.isEmpty()) {
+            consistentFrames = 0;
+            return;
+        }
+
+        // Only update the pose estimator if we have a consistent stream of vision measurements.
+        consistentFrames++;
+
+        if (consistentFrames < REQUIRED_FRAMES)
+            return;
+
+        Matrix<N3,N1> stdDevs =
+            limelight.computeStdDevs(filtered.get(), speeds);
+
+        swerve.addVisionMeasurement(
+            filtered.get().pose,
+            filtered.get().timestamp,
+            stdDevs
+        );
     }
 
     private SendableChooser<Command> buildAutoChooser() {

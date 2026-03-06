@@ -21,8 +21,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -231,14 +229,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * @param visionMeasurementStdDevs Standard deviations of the vision pose measurement
      *     in the form [x, y, theta]ᵀ, with units in meters and radians.
      */
-    @Override
-    public void addVisionMeasurement(
-        Pose2d visionRobotPoseMeters,
-        double timestampSeconds,
-        Matrix<N3, N1> visionMeasurementStdDevs
-    ) {
-        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
-    }
+    // @Override
+    // public void addVisionMeasurement(
+    //     Pose2d visionRobotPoseMeters,
+    //     double timestampSeconds,
+    //     Matrix<N3, N1> visionMeasurementStdDevs
+    // ) {
+    //     super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
+    // }
 
     //TODO travail en cours, ne pas utiliser pour l'instant
     public void driveToPose(Pose2d target, double maxLinearSpeed, double maxAngularSpeed, double positionTolerance, double angleTolerance) {
