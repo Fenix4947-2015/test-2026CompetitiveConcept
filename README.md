@@ -6,6 +6,10 @@ The project is based on one of CTRE's [Phoenix 6 example projects](https://githu
 
 # Fenix 4947
 
+## À faire
+
+- Réfléchir aux bonnes conditions pour reseed pose. Actuellement c'est beaucoup d'erreur entre l'estimé vision et odométrie et au moins 2 tags. Problème c'est que je suis pas certain que le robot va voir 2 tags avant de commencer son mode autonome. L'autre potentiel problème c'est que je veux pas que ça reset sans raison.
+
 ## À tester
 
 ### Direction jostick selon aliance
