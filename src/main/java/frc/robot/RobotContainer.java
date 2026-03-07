@@ -174,6 +174,10 @@ public class RobotContainer {
                 PathPlannerPath.fromPathFile("climb2hub_aim"),
                 new PathConstraints(0.2, 0.1, 0.1, 0.1)
                 );
+                //TODO tester ça aussi:
+            // Command testPath = AutoBuilder.followPath(
+            //     PathPlannerPath.fromPathFile("climb2hub_aim")
+            //     );
             driver.leftTrigger().whileTrue(testPath);
             //TODO You should never allow a path to start if pose estimate is garbage.
             // Commands.either(
@@ -238,6 +242,62 @@ public class RobotContainer {
 
         Command enableTrenchSemiAuto = Commands.select(goTrenchCommandMap, goTrenchSelector);
         driver.leftBumper().whileTrue(enableTrenchSemiAuto);
+
+
+
+        //TODO tester move à position sans path find to pose
+        PathConstraints pathConstraints2 = new PathConstraints(2,2,2,2);
+        LinearVelocity trenchSemiAuto2 = MetersPerSecond.of(1);
+
+        //TODO utiliser la version flipped
+        Command goThrenchCenterRedLeft2 = AutoBuilder.pathfindToPose(
+            new Pose2d(10, 0.6, Rotation2d.fromDegrees(90)),   // Rouge gauche
+            pathConstraints2,
+            trenchSemiAuto2
+        );
+        Command goThrenchCenterRedRight2 = AutoBuilder.pathfindToPose(
+            new Pose2d(10, 7.4, Rotation2d.fromDegrees(-90)),  // Rouge droite
+            pathConstraints2,
+            trenchSemiAuto2
+            );
+        Command goThrenchGoalRedLeft2 = AutoBuilder.pathfindToPose(
+            new Pose2d(14, 1.635, Rotation2d.fromDegrees(130)),   // Rouge gauche
+            pathConstraints2,
+            trenchSemiAuto2
+        );
+        Command goThrenchGoalRedRight2 = AutoBuilder.pathfindToPose(
+            new Pose2d(14, 6.365, Rotation2d.fromDegrees(50)),   // Rouge droite
+            pathConstraints2,
+            trenchSemiAuto2
+        );
+
+        Map<GoTrench,Command> goTrenchCommandMap2 = Map.of(
+            GoTrench.GO_LEFT_CENTER, goThrenchCenterRedLeft2,
+            GoTrench.GO_RIGHT_CENTER, goThrenchCenterRedRight2,
+            GoTrench.GO_LEFT_GOAL, goThrenchGoalRedLeft2,
+            GoTrench.GO_RIGHT_GOAL, goThrenchGoalRedRight2,
+            GoTrench.NONE, Commands.none()
+        );
+
+        Supplier<GoTrench> goTrenchSelector2 = () -> {
+            Pose2d p = swerve.getState().Pose;
+            if (p.getX() > 12) {  // in goal zone, go to center
+                if (p.getY() < 4) {
+                    return GoTrench.GO_LEFT_CENTER;
+                } else {
+                    return GoTrench.GO_RIGHT_CENTER;
+                }
+            } else {  // in center zone, go to goal zone
+                if (p.getY() < 4) {
+                    return GoTrench.GO_LEFT_GOAL;
+                } else {
+                    return GoTrench.GO_RIGHT_GOAL;
+                }
+            }
+        };
+
+        Command enableTrenchSemiAuto2 = Commands.select(goTrenchCommandMap2, goTrenchSelector2);
+        driver.rightBumper().whileTrue(enableTrenchSemiAuto2);
 
     }
 
