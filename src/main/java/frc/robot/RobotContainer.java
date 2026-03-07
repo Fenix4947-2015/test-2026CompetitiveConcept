@@ -25,6 +25,11 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.IntegerPublisher;
+import edu.wpi.first.networktables.IntegerTopic;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -99,12 +104,34 @@ public class RobotContainer {
         () -> -driver.getLeftY(), 
         () -> -driver.getLeftX()
         );
+
+    // Networktables publishers
+    private final NetworkTable telemetryTable;
+    private final IntegerPublisher visionRawEmptyCountPublisher;
+    private final IntegerPublisher visionFilterOutlierEmptyCountPublisher;
+    private final IntegerPublisher visionFilterEmptyCountPublisher;
+    private final IntegerPublisher visionReseedCountPublisher;
+    private final IntegerPublisher visionValidCountPublisher;
+    private final StructPublisher<Pose2d> visionPosePublisher;
+    private int visionRawEmptyCount = 0;  // Counter for how many consecutive frames the raw vision measurement has been empty.
+    private int visionFilterOutlierEmptyCount = 0;
+    private int visionFilterEmptyCount = 0;
+    private int visionReseedCount = 0;
+    private int visionValidCount = 0;
     
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
         configureBindings();
         autoChooser = buildAutoChooser();
         swerve.registerTelemetry(swerveTelemetry::telemeterize);
+
+        telemetryTable = NetworkTableInstance.getDefault().getTable("Vision");
+        visionRawEmptyCountPublisher = telemetryTable.getIntegerTopic("Raw Empty Count").publish();
+        visionFilterOutlierEmptyCountPublisher = telemetryTable.getIntegerTopic("Filter Outlier Empty Count").publish();
+        visionFilterEmptyCountPublisher = telemetryTable.getIntegerTopic("Filter Empty Count").publish();
+        visionReseedCountPublisher = telemetryTable.getIntegerTopic("Reseed Count").publish();
+        visionValidCountPublisher = telemetryTable.getIntegerTopic("Valid Count").publish();
+        visionPosePublisher = telemetryTable.getStructTopic("Estimated Vision Pose", Pose2d.struct).publish();
     }
     
     /**
@@ -218,14 +245,6 @@ public class RobotContainer {
         return limelight.run(() -> {
             final SwerveDriveState currentRobotState = swerve.getState();
             processVision(currentRobotState.Pose, currentRobotState.Speeds);
-
-            // if (translationError > 3.0 && m.tagCount >= 2) {
-            //     estimator.resetPosition(
-            //         gyroRotation,
-            //         modulePositions,
-            //         m.pose
-            //     );
-            // }
         })
         .ignoringDisable(true);
     }
@@ -239,12 +258,14 @@ public class RobotContainer {
 
         if (raw.isEmpty()) {
             consistentFrames = 0;
+            visionRawEmptyCount++;
             return;
         }
         
         Optional<VisionMeasurement> filteredOutlier = limelight.filterOutlierMeasurement(raw.get(), currentPose);
         if (filteredOutlier.isEmpty()) {
             consistentFrames = 0;
+            visionFilterOutlierEmptyCount++;
             return;
         }
 
@@ -259,6 +280,7 @@ public class RobotContainer {
         if (translationError > 3.0 && m.tagCount >= 2) {
             swerve.resetPose(m.pose);
             consistentFrames = 0;
+            visionReseedCount++;
             return;
         }
 
@@ -267,6 +289,7 @@ public class RobotContainer {
 
         if (filtered.isEmpty()) {
             consistentFrames = 0;
+            visionFilterEmptyCount++;
             return;
         }
 
@@ -284,6 +307,9 @@ public class RobotContainer {
             filtered.get().timestamp,
             stdDevs
         );
+
+        visionPosePublisher.set(filtered.get().pose);
+        visionValidCount++;
     }
 
     private SendableChooser<Command> buildAutoChooser() {
@@ -323,5 +349,14 @@ public class RobotContainer {
      */
     public Pose2d getPoseMeters() {
         return swerve.getState().Pose;
+    }
+
+    public void Periodic() {
+        // Update SmartDashboard with vision telemetry.
+        visionRawEmptyCountPublisher.set(visionRawEmptyCount);
+        visionFilterOutlierEmptyCountPublisher.set(visionFilterOutlierEmptyCount);
+        visionFilterEmptyCountPublisher.set(visionFilterEmptyCount);
+        visionReseedCountPublisher.set(visionReseedCount);
+        visionValidCountPublisher.set(visionValidCount);
     }
 }

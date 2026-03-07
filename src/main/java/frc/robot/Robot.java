@@ -12,7 +12,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -27,6 +26,7 @@ public class Robot extends LoggedRobot  {
     private final RobotContainer m_robotContainer;
     private Command m_autonomousCommand;
     private final Field2d m_field = new Field2d();
+    private long lastVisionUpdateTime = 0;  // Timestamp of the last vision telemetry update
 
     /**
      * This function is run when the robot is first started up and should be used for any
@@ -39,6 +39,7 @@ public class Robot extends LoggedRobot  {
         SmartDashboard.putData(CommandScheduler.getInstance());
         SmartDashboard.putData("Field", m_field);
         RobotController.setBrownoutVoltage(Volts.of(6.1));
+        lastVisionUpdateTime = System.currentTimeMillis();
     }
     
     /**
@@ -56,8 +57,16 @@ public class Robot extends LoggedRobot  {
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
 
-        // Get the latest robot pose from odometry and update the Field2d for visualization on the dashboard
-        m_field.setRobotPose(m_robotContainer.getPoseMeters());
+        // throttle the telemetry updates to avoid flooding the network tables and overwhelming the dashboard
+        if (System.currentTimeMillis() - lastVisionUpdateTime > 200) {
+            // Call the RobotContainer's periodic method to update vision telemetry
+            m_robotContainer.Periodic();  
+
+            // Get the latest robot pose from odometry and update the Field2d for visualization on the dashboard
+            m_field.setRobotPose(m_robotContainer.getPoseMeters());
+
+            lastVisionUpdateTime = System.currentTimeMillis();
+        }
     }
 
     @Override
