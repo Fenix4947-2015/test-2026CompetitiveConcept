@@ -19,12 +19,14 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerTopic;
 import edu.wpi.first.networktables.NetworkTable;
@@ -89,6 +91,7 @@ public class RobotContainer {
     // Vision updates
     private int consistentFrames = 0;
     private static final int REQUIRED_FRAMES = 3; // Number of consecutive frames with a valid measurement required to consider the pose estimate reliable.
+    private boolean firstReset = true;
 
     // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
     private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
@@ -113,6 +116,7 @@ public class RobotContainer {
     private final IntegerPublisher visionReseedCountPublisher;
     private final IntegerPublisher visionValidCountPublisher;
     private final StructPublisher<Pose2d> visionPosePublisher;
+    private final DoubleArrayPublisher stdPosePublisher;
     private int visionRawEmptyCount = 0;  // Counter for how many consecutive frames the raw vision measurement has been empty.
     private int visionFilterOutlierEmptyCount = 0;
     private int visionFilterEmptyCount = 0;
@@ -132,6 +136,7 @@ public class RobotContainer {
         visionReseedCountPublisher = telemetryTable.getIntegerTopic("Reseed Count").publish();
         visionValidCountPublisher = telemetryTable.getIntegerTopic("Valid Count").publish();
         visionPosePublisher = telemetryTable.getStructTopic("Estimated Vision Pose", Pose2d.struct).publish();
+        stdPosePublisher = telemetryTable.getDoubleArrayTopic("Std dev Vision Pose").publish();
     }
     
     /**
@@ -170,15 +175,18 @@ public class RobotContainer {
 
         try {
             // Semi-auto path
-            Command testPath = AutoBuilder.pathfindThenFollowPath(
-                PathPlannerPath.fromPathFile("climb2hub_aim"),
-                new PathConstraints(0.2, 0.1, 0.1, 0.1)
-                );
-                //TODO tester ça aussi:
-            // Command testPath = AutoBuilder.followPath(
-            //     PathPlannerPath.fromPathFile("climb2hub_aim")
-            //     );
-            driver.leftTrigger().whileTrue(testPath);
+            driver.leftTrigger().whileTrue(
+                AutoBuilder.pathfindThenFollowPath(
+                    PathPlannerPath.fromPathFile("Semi_Auto"),
+                    new PathConstraints(2, 1, 2, 1)
+                    )
+            );
+            //TODO tester ça aussi:
+            driver.rightBumper().whileTrue(
+                AutoBuilder.followPath(
+                    PathPlannerPath.fromPathFile("Semi_Auto")
+                    )
+            );
             //TODO You should never allow a path to start if pose estimate is garbage.
             // Commands.either(
             //     scorePath,
@@ -245,61 +253,82 @@ public class RobotContainer {
 
 
 
-        //TODO tester move à position sans path find to pose
-        PathConstraints pathConstraints2 = new PathConstraints(2,2,2,2);
-        LinearVelocity trenchSemiAuto2 = MetersPerSecond.of(1);
+        // //TODO tester move à position sans path find to pose
+        // PathConstraints pathConstraints2 = new PathConstraints(2,2,2,2);
+        // LinearVelocity trenchSemiAuto2 = MetersPerSecond.of(1);
 
-        //TODO utiliser la version flipped
-        Command goThrenchCenterRedLeft2 = AutoBuilder.pathfindToPose(
-            new Pose2d(10, 0.6, Rotation2d.fromDegrees(90)),   // Rouge gauche
-            pathConstraints2,
-            trenchSemiAuto2
-        );
-        Command goThrenchCenterRedRight2 = AutoBuilder.pathfindToPose(
-            new Pose2d(10, 7.4, Rotation2d.fromDegrees(-90)),  // Rouge droite
-            pathConstraints2,
-            trenchSemiAuto2
-            );
-        Command goThrenchGoalRedLeft2 = AutoBuilder.pathfindToPose(
-            new Pose2d(14, 1.635, Rotation2d.fromDegrees(130)),   // Rouge gauche
-            pathConstraints2,
-            trenchSemiAuto2
-        );
-        Command goThrenchGoalRedRight2 = AutoBuilder.pathfindToPose(
-            new Pose2d(14, 6.365, Rotation2d.fromDegrees(50)),   // Rouge droite
-            pathConstraints2,
-            trenchSemiAuto2
-        );
+        // //TODO utiliser la version flipped
+        // Command goThrenchCenterRedLeft2 = AutoBuilder.pathfindToPose(
+        //     new Pose2d(10, 0.6, Rotation2d.fromDegrees(90)),   // Rouge gauche
+        //     pathConstraints2,
+        //     trenchSemiAuto2
+        // );
+        // Command goThrenchCenterRedRight2 = AutoBuilder.pathfindToPose(
+        //     new Pose2d(10, 7.4, Rotation2d.fromDegrees(-90)),  // Rouge droite
+        //     pathConstraints2,
+        //     trenchSemiAuto2
+        //     );
+        // Command goThrenchGoalRedLeft2 = AutoBuilder.pathfindToPose(
+        //     new Pose2d(14, 1.635, Rotation2d.fromDegrees(130)),   // Rouge gauche
+        //     pathConstraints2,
+        //     trenchSemiAuto2
+        // );
+        // Command goThrenchGoalRedRight2 = AutoBuilder.pathfindToPose(
+        //     new Pose2d(14, 6.365, Rotation2d.fromDegrees(50)),   // Rouge droite
+        //     pathConstraints2,
+        //     trenchSemiAuto2
+        // );
 
-        Map<GoTrench,Command> goTrenchCommandMap2 = Map.of(
-            GoTrench.GO_LEFT_CENTER, goThrenchCenterRedLeft2,
-            GoTrench.GO_RIGHT_CENTER, goThrenchCenterRedRight2,
-            GoTrench.GO_LEFT_GOAL, goThrenchGoalRedLeft2,
-            GoTrench.GO_RIGHT_GOAL, goThrenchGoalRedRight2,
-            GoTrench.NONE, Commands.none()
-        );
+        // Map<GoTrench,Command> goTrenchCommandMap2 = Map.of(
+        //     GoTrench.GO_LEFT_CENTER, goThrenchCenterRedLeft2,
+        //     GoTrench.GO_RIGHT_CENTER, goThrenchCenterRedRight2,
+        //     GoTrench.GO_LEFT_GOAL, goThrenchGoalRedLeft2,
+        //     GoTrench.GO_RIGHT_GOAL, goThrenchGoalRedRight2,
+        //     GoTrench.NONE, Commands.none()
+        // );
 
-        Supplier<GoTrench> goTrenchSelector2 = () -> {
-            Pose2d p = swerve.getState().Pose;
-            if (p.getX() > 12) {  // in goal zone, go to center
-                if (p.getY() < 4) {
-                    return GoTrench.GO_LEFT_CENTER;
-                } else {
-                    return GoTrench.GO_RIGHT_CENTER;
-                }
-            } else {  // in center zone, go to goal zone
-                if (p.getY() < 4) {
-                    return GoTrench.GO_LEFT_GOAL;
-                } else {
-                    return GoTrench.GO_RIGHT_GOAL;
-                }
-            }
-        };
+        // Supplier<GoTrench> goTrenchSelector2 = () -> {
+        //     Pose2d p = swerve.getState().Pose;
+        //     if (p.getX() > 12) {  // in goal zone, go to center
+        //         if (p.getY() < 4) {
+        //             return GoTrench.GO_LEFT_CENTER;
+        //         } else {
+        //             return GoTrench.GO_RIGHT_CENTER;
+        //         }
+        //     } else {  // in center zone, go to goal zone
+        //         if (p.getY() < 4) {
+        //             return GoTrench.GO_LEFT_GOAL;
+        //         } else {
+        //             return GoTrench.GO_RIGHT_GOAL;
+        //         }
+        //     }
+        // };
 
-        Command enableTrenchSemiAuto2 = Commands.select(goTrenchCommandMap2, goTrenchSelector2);
-        driver.rightBumper().whileTrue(enableTrenchSemiAuto2);
+        // Command enableTrenchSemiAuto2 = Commands.select(goTrenchCommandMap2, goTrenchSelector2);
+        // driver.rightBumper().whileTrue(enableTrenchSemiAuto2);
 
     }
+
+
+
+    // private Command updateVisionCommand() {
+    //     return limelight.run(() -> {
+    //         final Pose2d currentRobotPose = swerve.getState().Pose;
+    //         final Optional<Limelight.Measurement> measurement = limelight.getMeasurement(currentRobotPose);
+    //         measurement.ifPresent(m -> {
+
+    //             visionPosePublisher.set(m.poseEstimate.pose);
+
+    //             swerve.addVisionMeasurement(
+    //                 m.poseEstimate.pose, 
+    //                 m.poseEstimate.timestampSeconds,
+    //                 m.standardDeviations
+    //             );
+    //         });
+    //     })
+    //     .ignoringDisable(true);
+    // }
+
 
     private Command updateVisionCommand() {
         return limelight.run(() -> {
@@ -337,10 +366,11 @@ public class RobotContainer {
         // ----------------------------
         // Reseed condition in case we get lost or when we start the robot.
         // ----------------------------
-        if (translationError > 3.0 && m.tagCount >= 2) {
+        if (firstReset || translationError > 3.0 && m.tagCount >= 2) {
             swerve.resetPose(m.pose);
             consistentFrames = 0;
             visionReseedCount++;
+            firstReset = false;
             return;
         }
 
@@ -360,15 +390,22 @@ public class RobotContainer {
             return;
 
         Matrix<N3,N1> stdDevs =
-            limelight.computeStdDevs(filtered.get(), speeds);
+            // limelight.computeStdDevs(filtered.get(), speeds);
+            VecBuilder.fill(0.1, 0.1, 10.0);
 
+        // swerve.addVisionMeasurement(
+        //     filtered.get().pose,
+        //     filtered.get().timestamp,
+        //     stdDevs
+        // );
         swerve.addVisionMeasurement(
             filtered.get().pose,
-            filtered.get().timestamp,
+            filtered.get().timestampSeconds,
             stdDevs
         );
 
         visionPosePublisher.set(filtered.get().pose);
+        stdPosePublisher.set(stdDevs.getData());
         visionValidCount++;
     }
 

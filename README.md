@@ -10,6 +10,10 @@ The project is based on one of CTRE's [Phoenix 6 example projects](https://githu
 
 - Réfléchir aux bonnes conditions pour reseed pose. Actuellement c'est beaucoup d'erreur entre l'estimé vision et odométrie et au moins 2 tags. Problème c'est que je suis pas certain que le robot va voir 2 tags avant de commencer son mode autonome. L'autre potentiel problème c'est que je veux pas que ça reset sans raison.
 
+en se moment au boot il y a pas de position robot si on voit un seul tag (flag juste pour boot pour seed avec n'importe quoi?)
+
+Peut-on utiliser l'ambiguiter comme métrique sur la fiabilité des tag? double ambig = mt2.rawFiducials[0].ambiguity;
+
 ## À tester
 
 ### Direction jostick selon aliance

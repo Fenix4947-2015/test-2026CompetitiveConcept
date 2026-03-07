@@ -32,48 +32,61 @@ public class Limelight extends SubsystemBase {
         // this.posePublisher = telemetryTable.getStructTopic("Estimated Robot Pose", Pose2d.struct).publish();
     }
 
-    // public Optional<Measurement> getMeasurement(SwerveDriveState currentRobotState) {
-    //     final Pose2d currentRobotPose = currentRobotState.Pose;
-    //     final ChassisSpeeds currentRobotSpeeds = currentRobotState.Speeds;
+    public Optional<Measurement> getMeasurement(Pose2d currentRobotPose) {
+        LimelightHelpers.SetRobotOrientation(name, currentRobotPose.getRotation().getDegrees(), 0, 0, 0, 0, 0);
+
+        final PoseEstimate poseEstimate_MegaTag1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(name);
+        final PoseEstimate poseEstimate_MegaTag2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
+        if (
+            poseEstimate_MegaTag1 == null 
+                || poseEstimate_MegaTag2 == null
+                || poseEstimate_MegaTag1.tagCount == 0
+                || poseEstimate_MegaTag2.tagCount == 0
+        ) {
+            return Optional.empty();
+        }
+
+        // Combine the readings from MegaTag1 and MegaTag2:
+        // 1. Use the more stable position from MegaTag2
+        // 2. Use the rotation from MegaTag1 (with low confidence) to counteract gyro drift
+        poseEstimate_MegaTag2.pose = new Pose2d(
+            poseEstimate_MegaTag2.pose.getTranslation(),
+            poseEstimate_MegaTag1.pose.getRotation()
+        );
+        final Matrix<N3, N1> standardDeviations = VecBuilder.fill(0.1, 0.1, 10.0);
+
+        // posePublisher.set(poseEstimate_MegaTag2.pose);
+
+        return Optional.of(new Measurement(poseEstimate_MegaTag2, standardDeviations));
+    }
+
+    // public Optional<Measurement> getMeasurement(Pose2d currentRobotPose) {
     //     LimelightHelpers.SetRobotOrientation(name, currentRobotPose.getRotation().getDegrees(), 0, 0, 0, 0, 0);
 
-    //     // Vision gating based on speed: if the robot is moving too fast, the vision measurements are likely to be inaccurate, so we discard them
-    //     final double speedMagnitude = Math.hypot(currentRobotSpeeds.vxMetersPerSecond, currentRobotSpeeds.vyMetersPerSecond);
-    //     final double speedThreshold = 2.0; // m/s, adjust as needed based on testing
-    //     if (speedMagnitude > speedThreshold) {
-    //         return Optional.empty();
-    //     }
-    //     // Additional gating based on rotational speed
-    //     final double rotationSpeed = Math.abs(currentRobotSpeeds.omegaRadiansPerSecond);
-    //     final double rotationSpeedThreshold = 3; // rad/s, adjust as needed based on testing
-    //     if (rotationSpeed > rotationSpeedThreshold) {
-    //         return Optional.empty();
-    //     }
-
-    //     final PoseEstimate poseEstimate_MegaTag1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(name);
     //     final PoseEstimate poseEstimate_MegaTag2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
     //     if (
-    //         poseEstimate_MegaTag1 == null 
-    //             || poseEstimate_MegaTag2 == null
-    //             || poseEstimate_MegaTag1.tagCount == 0
+    //             poseEstimate_MegaTag2 == null
     //             || poseEstimate_MegaTag2.tagCount == 0
     //     ) {
     //         return Optional.empty();
     //     }
 
-    //     // Combine the readings from MegaTag1 and MegaTag2:
-    //     // 1. Use the more stable position from MegaTag2
-    //     // 2. Use the rotation from MegaTag1 (with low confidence) to counteract gyro drift
-    //     poseEstimate_MegaTag2.pose = new Pose2d(
-    //         poseEstimate_MegaTag2.pose.getTranslation(),
-    //         poseEstimate_MegaTag1.pose.getRotation()
-    //     );
-    //     final Matrix<N3, N1> standardDeviations = VecBuilder.fill(0.1, 0.1, 5.0);
+    //     final Matrix<N3, N1> standardDeviations = VecBuilder.fill(0.2, 0.2, 1.0);
 
-    //     posePublisher.set(poseEstimate_MegaTag2.pose);
+    //     // posePublisher.set(poseEstimate_MegaTag2.pose);
 
-    //     return Optional.of(new VisionMeasurement(poseEstimate_MegaTag2, standardDeviations));
+    //     return Optional.of(new Measurement(poseEstimate_MegaTag2, standardDeviations));
     // }
+
+    public static class Measurement {
+        public final PoseEstimate poseEstimate;
+        public final Matrix<N3, N1> standardDeviations;
+
+        public Measurement(PoseEstimate poseEstimate, Matrix<N3, N1> standardDeviations) {
+            this.poseEstimate = poseEstimate;
+            this.standardDeviations = standardDeviations;
+        }
+    }
 
     public Optional<VisionMeasurement> getRawMeasurement(Pose2d robotPose) {
 
@@ -83,11 +96,22 @@ public class Limelight extends SubsystemBase {
             0,0,0,0,0
         );
 
+        PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(name);
         PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
 
-        if (mt2 == null || mt2.tagCount == 0) {
+        if (mt2 == null 
+            || mt2.tagCount == 0
+            || mt1 == null
+            || mt1.tagCount == 0) {
             return Optional.empty();
         }
+
+        double ambig = mt2.rawFiducials[0].ambiguity;
+
+        Pose2d pose = new Pose2d(
+            mt2.pose.getTranslation(),
+            mt1.pose.getRotation()
+        );
 
         double timestamp =
             Timer.getFPGATimestamp()
@@ -95,10 +119,11 @@ public class Limelight extends SubsystemBase {
 
         return Optional.of(
             new VisionMeasurement(
-                mt2.pose,
+                pose,
                 timestamp,
                 mt2.avgTagDist,
-                mt2.tagCount
+                mt2.tagCount,
+                mt2.timestampSeconds
             )
         );
     }
@@ -130,10 +155,10 @@ public class Limelight extends SubsystemBase {
                     .getRadians()
             );
 
-        if (translationError > 1.2)
+        if (translationError > 2)
             return Optional.empty();
 
-        if (rotationError > Math.toRadians(50))
+        if (rotationError > Math.toRadians(90))
             return Optional.empty();
 
         return Optional.of(m);
@@ -162,15 +187,15 @@ public class Limelight extends SubsystemBase {
             Math.abs(speeds.omegaRadiansPerSecond);
 
         double xy =
-            0.05
-            + m.tagDistance * 0.07
-            + speed * 0.05
-            + omega * 0.03;
+            0.1
+            + m.tagDistance * 0.1
+            + speed * 0.1
+            + omega * 0.1;
 
         double theta =
-            0.14
-            + m.tagDistance * 0.05
-            + omega * 0.09;
+            0.3
+            + m.tagDistance * 0.1
+            + omega * 0.1;
 
         return VecBuilder.fill(xy, xy, theta);
     }    
@@ -180,17 +205,20 @@ public class Limelight extends SubsystemBase {
         public final double timestamp;
         public final double tagDistance;
         public final int tagCount;
+        public final double timestampSeconds;
 
         public VisionMeasurement(
             Pose2d pose,
             double timestamp,
             double tagDistance,
-            int tagCount
+            int tagCount, 
+            double timestampSeconds
         ) {
             this.pose = pose;
             this.timestamp = timestamp;
             this.tagDistance = tagDistance;
             this.tagCount = tagCount;
+            this.timestampSeconds = timestampSeconds;
         }
     }
 
