@@ -20,10 +20,13 @@ import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
@@ -41,6 +44,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
 import frc.robot.Constants.Driving;
 import frc.robot.commands.AutoRoutines;
 import frc.robot.commands.ManualDriveCommand;
@@ -408,6 +412,42 @@ public class RobotContainer {
         stdPosePublisher.set(stdDevs.getData());
         visionValidCount++;
     }
+
+    // Example: Cloned pose estimator for validation
+    // private void clonedEstimator(){
+
+
+    //     // Assume you have access to these from your main swerve
+    //     SwerveDriveKinematics kinematics = swerve.getKinematics();
+    //     SwerveModulePosition[] modulePositions = swerve.getState().ModulePositions;
+    //     Rotation2d gyroAngle = swerve.getRotation3d().getRotation2d();
+    //     Pose2d initialPose = swerve.getState().Pose;
+
+    //     // Standard deviations for state and vision
+    //     Matrix<N3, N1> stateStdDevs = VecBuilder.fill(0.1, 0.1, 0.1);
+    //     Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0.5, 0.5, 10.0);
+
+    //     // Create the cloned estimator
+    //     SwerveDrivePoseEstimator clonedEstimator = new SwerveDrivePoseEstimator(
+    //         kinematics,
+    //         gyroAngle,
+    //         modulePositions,
+    //         initialPose,
+    //         stateStdDevs,
+    //         visionStdDevs
+    //     );
+
+    //     // Periodically update with odometry
+    //     clonedEstimator.update(gyroAngle, modulePositions);
+
+    //     // When you get a vision measurement:
+    //     Pose2d visionPose = ...; // from Limelight or other vision source
+    //     double visionTimestamp = ...; // timestamp in seconds
+    //     clonedEstimator.addVisionMeasurement(visionPose, visionTimestamp);
+
+    //     // After several good vision updates, check if clonedEstimator.getEstimatedPosition() is stable
+    //     // If so, you can reset your main estimator to this pose
+    // }
 
     private SendableChooser<Command> buildAutoChooser() {
         final SendableChooser<Command> autoChooser;
