@@ -415,6 +415,88 @@ public class RobotContainer {
         visionValidCount++;
     }
 
+    private void processVision2(
+            Pose2d currentPose,
+            ChassisSpeeds speeds) {
+
+        Optional<VisionMeasurement> measurement = getMeasurementFrom(limelight, currentPose);
+        if (measurement.isEmpty()) {
+            measurement = getMeasurementFrom(limelight, currentPose); //TODO utiliser limelight3
+        }
+        
+        if (measurement.isEmpty()) {
+            consistentFrames = 0;
+            visionRawEmptyCount++;
+            return;
+        }
+
+        // double translationError =
+        //     m.pose.getTranslation()
+        //         .getDistance(currentPose.getTranslation());
+
+        // ----------------------------
+        // Reseed condition in case we get lost or when we start the robot.
+        // ----------------------------
+        // if (needsReset || (translationError > 3.0 && m.tagCount >= 2)) {
+        if (needsReset && measurement.get().tagCount >= 1) {
+            swerve.resetPose(measurement.get().pose);
+            consistentFrames = 0;
+            visionReseedCount++;
+            needsReset = false;
+            return;
+        }
+
+        Optional<VisionMeasurement> filtered =
+            limelight.filterMeasurement(measurement.get(), currentPose);
+
+        if (filtered.isEmpty()) {
+            consistentFrames = 0;
+            visionFilterEmptyCount++;
+            return;
+        }
+
+        // Only update the pose estimator if we have a consistent stream of vision measurements.
+        consistentFrames++;
+
+        if (consistentFrames < REQUIRED_FRAMES)
+            return;
+
+        Matrix<N3,N1> stdDevs =
+            // limelight.computeStdDevs(filtered.get(), speeds);
+            VecBuilder.fill(0.1, 0.1, 10.0);
+
+        // swerve.addVisionMeasurement(
+        //     filtered.get().pose,
+        //     filtered.get().timestamp,
+        //     stdDevs
+        // );
+        swerve.addVisionMeasurement(
+            filtered.get().pose,
+            filtered.get().timestampSeconds,
+            stdDevs
+        );
+
+        visionPosePublisher.set(filtered.get().pose);
+        stdPosePublisher.set(stdDevs.getData());
+        visionValidCount++;
+    }
+
+    private Optional<VisionMeasurement> getMeasurementFrom(Limelight limelight, Pose2d currentPose) {
+        Optional<VisionMeasurement> raw =
+            limelight.getRawMeasurement(currentPose);
+
+        if (raw.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        Optional<VisionMeasurement> filteredOutlier = limelight.filterOutlierMeasurement(raw.get(), currentPose);
+        if (filteredOutlier.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return filteredOutlier;
+    }
+
     // Example: Cloned pose estimator for validation
     // private void clonedEstimator(){
 
