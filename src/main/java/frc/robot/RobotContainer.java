@@ -176,7 +176,7 @@ public class RobotContainer {
         driver.back().onTrue(Commands.runOnce(() -> manualDriveCommand.seedFieldCentric()));
         driver.povRight().onTrue(Commands.runOnce(() -> needsReset = true));  // Temporary: use the right button to trigger a vision reset when needed, until we have a more robust auto-reseeding strategy.
         // driver.rightTrigger().whileTrue(subsystemCommands.aim());   // tester si cette ligne fonctionne ou la suivante pour enligner le robot vers le but
-        driver.rightTrigger().whileTrue(Commands.run(() -> manualDriveCommand.setLockedHeading(Landmarks.getDirectionToHub(swerve))));
+        driver.rightTrigger().whileTrue(Commands.run(() -> manualDriveCommand.setLockedHeading(Landmarks.getDirectionToShoot(swerve))));
 
         try {
             // Semi-auto path
