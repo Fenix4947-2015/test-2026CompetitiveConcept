@@ -95,7 +95,7 @@ public class RobotContainer {
     // Vision updates
     private int consistentFrames = 0;
     private static final int REQUIRED_FRAMES = 3; // Number of consecutive frames with a valid measurement required to consider the pose estimate reliable.
-    private boolean firstReset = true;
+    private boolean needsReset = true;
 
     // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
     private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
@@ -174,6 +174,7 @@ public class RobotContainer {
         driver.x().onTrue(Commands.runOnce(() -> manualDriveCommand.setLockedHeading(Rotation2d.kCCW_90deg)));
         driver.y().onTrue(Commands.runOnce(() -> manualDriveCommand.setLockedHeading(Rotation2d.kZero)));
         driver.back().onTrue(Commands.runOnce(() -> manualDriveCommand.seedFieldCentric()));
+        driver.povRight().onTrue(Commands.runOnce(() -> needsReset = true));  // Temporary: use the right button to trigger a vision reset when needed, until we have a more robust auto-reseeding strategy.
         // driver.rightTrigger().whileTrue(subsystemCommands.aim());   // tester si cette ligne fonctionne ou la suivante pour enligner le robot vers le but
         driver.rightTrigger().whileTrue(Commands.run(() -> manualDriveCommand.setLockedHeading(Landmarks.getDirectionToHub(swerve))));
 
@@ -363,18 +364,19 @@ public class RobotContainer {
         }
 
         VisionMeasurement m = filteredOutlier.get();
-        double translationError =
-            m.pose.getTranslation()
-                .getDistance(currentPose.getTranslation());
+        // double translationError =
+        //     m.pose.getTranslation()
+        //         .getDistance(currentPose.getTranslation());
 
         // ----------------------------
         // Reseed condition in case we get lost or when we start the robot.
         // ----------------------------
-        if (firstReset || translationError > 3.0 && m.tagCount >= 2) {
+        // if (needsReset || (translationError > 3.0 && m.tagCount >= 2)) {
+        if (needsReset && m.tagCount >= 1) {
             swerve.resetPose(m.pose);
             consistentFrames = 0;
             visionReseedCount++;
-            firstReset = false;
+            needsReset = false;
             return;
         }
 
