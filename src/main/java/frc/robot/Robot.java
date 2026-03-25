@@ -72,7 +72,7 @@ public class Robot extends LoggedRobot  {
     @Override
     public void robotInit() {
 
-        Logger.addDataReceiver(new WPILOGWriter());   // writes .wpilog file
+        // Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));   // writes .wpilog file. No argument = log to USB
         Logger.addDataReceiver(new NT4Publisher());   // streams live to NT
         Logger.start();
     }

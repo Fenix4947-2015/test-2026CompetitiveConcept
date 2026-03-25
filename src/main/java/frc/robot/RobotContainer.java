@@ -36,6 +36,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -49,13 +50,10 @@ import frc.robot.Constants.Driving;
 import frc.robot.commands.AutoRoutines;
 import frc.robot.commands.ManualDriveCommand;
 import frc.robot.commands.SubsystemCommands;
-import frc.robot.subsystems.Floor;
-import frc.robot.subsystems.Hanger;
 // Disabled subsystems for path-planning tests: Intake, Floor, Feeder, Shooter, Hood, Hanger
 // They are intentionally not instantiated below so autos and swerve/limelight testing remain simple.
 import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Limelight.VisionMeasurement;
-import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Swerve;
 import frc.util.SwerveTelemetry;
 
@@ -95,7 +93,8 @@ public class RobotContainer {
     // Vision updates
     private int consistentFrames = 0;
     private static final int REQUIRED_FRAMES = 3; // Number of consecutive frames with a valid measurement required to consider the pose estimate reliable.
-    private boolean needsReset = true;
+    private boolean needsReset = false;
+    private boolean firstBoot = true;
 
     // Create AutoRoutines with only the subsystems we want enabled for path-planning tests.
     private final AutoRoutines autoRoutines = new AutoRoutines(swerve, limelight);
@@ -364,19 +363,23 @@ public class RobotContainer {
         }
 
         VisionMeasurement m = filteredOutlier.get();
-        // double translationError =
-        //     m.pose.getTranslation()
-        //         .getDistance(currentPose.getTranslation());
+        double translationError =
+            m.pose.getTranslation()
+                .getDistance(currentPose.getTranslation());
 
         // ----------------------------
         // Reseed condition in case we get lost or when we start the robot.
         // ----------------------------
-        // if (needsReset || (translationError > 3.0 && m.tagCount >= 2)) {
-        if (needsReset && m.tagCount >= 1) {
+        if ((needsReset && m.tagCount >= 2) ||  // manuel reseed
+            (translationError > 3.0 && m.tagCount >= 2 && m.avgAmbiguity < 0.5) || // Auto reseed
+            DriverStation.isDisabled() && m.tagCount >= 1  // Always reseed when disabled   RobotModeTriggers.disabled()
+        ) {
+        // if ((firstBoot && m.tagCount >=1) || (needsReset && m.tagCount >= 2)) {
             swerve.resetPose(m.pose);
             consistentFrames = 0;
             visionReseedCount++;
             needsReset = false;
+            firstBoot = false;
             return;
         }
 

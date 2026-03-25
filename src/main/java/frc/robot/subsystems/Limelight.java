@@ -104,9 +104,20 @@ public class Limelight extends SubsystemBase {
             || mt1 == null
             || mt1.tagCount == 0) {
             return Optional.empty();
-        }
+        }   
 
-        double ambig = mt2.rawFiducials[0].ambiguity;
+
+        // Logger.recordOutput("Limelight/mt2/tagCount", mt2.tagCount);
+        // for (int i = 0; i < mt2.tagCount; i++) {
+        //     Logger.recordOutput("Limelight/mt2/id_" + mt2.rawFiducials[i].id + "/ambiguity", mt2.rawFiducials[i].ambiguity);
+        //     Logger.recordOutput("Limelight/mt2/id_" + mt2.rawFiducials[i].id + "/distance", mt2.rawFiducials[i].distToCamera);
+        // }
+
+        // Logger.recordOutput("Limelight/mt1/tagCount", mt1.tagCount);
+        // for (int i = 0; i < mt1.tagCount; i++) {
+        //     Logger.recordOutput("Limelight/mt1/id_" + mt1.rawFiducials[i].id + "/ambiguity", mt1.rawFiducials[i].ambiguity);
+        //     Logger.recordOutput("Limelight/mt1/id_" + mt1.rawFiducials[i].id + "/distance", mt1.rawFiducials[i].distToCamera);
+        // }
 
         Pose2d pose = new Pose2d(
             mt2.pose.getTranslation(),
@@ -117,13 +128,21 @@ public class Limelight extends SubsystemBase {
             Timer.getFPGATimestamp()
             - mt2.latency / 1000.0;
 
+        // Calculate average ambiguity
+        double avgAmbiguity = 0;
+        for (int i = 0; i < mt2.tagCount; i++) {
+            avgAmbiguity += mt2.rawFiducials[i].ambiguity;
+        }
+        avgAmbiguity /= mt2.tagCount;
+
         return Optional.of(
             new VisionMeasurement(
                 pose,
                 timestamp,
                 mt2.avgTagDist,
                 mt2.tagCount,
-                mt2.timestampSeconds
+                mt2.timestampSeconds,
+                avgAmbiguity
             )
         );
     }
@@ -206,19 +225,22 @@ public class Limelight extends SubsystemBase {
         public final double tagDistance;
         public final int tagCount;
         public final double timestampSeconds;
+        public final double avgAmbiguity;
 
         public VisionMeasurement(
             Pose2d pose,
             double timestamp,
             double tagDistance,
             int tagCount, 
-            double timestampSeconds
+            double timestampSeconds,
+            double avgAmbiguity
         ) {
             this.pose = pose;
             this.timestamp = timestamp;
             this.tagDistance = tagDistance;
             this.tagCount = tagCount;
             this.timestampSeconds = timestampSeconds;
+            this.avgAmbiguity = avgAmbiguity;
         }
     }
 

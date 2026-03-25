@@ -187,9 +187,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                         ? kRedAlliancePerspectiveRotation
                         : kBlueAlliancePerspectiveRotation
                 );
-                if (!m_hasAppliedOperatorPerspective) {
-                    seedFieldCentric();
-                }
+                // TODO: necessaire????
+                // if (!m_hasAppliedOperatorPerspective) {
+                //     seedFieldCentric();
+                // }
                 m_hasAppliedOperatorPerspective = true;
             });
         }
@@ -240,65 +241,65 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
     }
 
-    //TODO travail en cours, ne pas utiliser pour l'instant
-    public void driveToPose(Pose2d target, double maxLinearSpeed, double maxAngularSpeed, double positionTolerance, double angleTolerance) {
-        // Enable continuous input for theta controller
-        pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
+    // //TODO travail en cours, ne pas utiliser pour l'instant
+    // public void driveToPose(Pose2d target, double maxLinearSpeed, double maxAngularSpeed, double positionTolerance, double angleTolerance) {
+    //     // Enable continuous input for theta controller
+    //     pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
-        Pose2d currentPose = getState().Pose;
+    //     Pose2d currentPose = getState().Pose;
 
-        // Calculate errors
-        double xError = target.getX() - currentPose.getX();
-        double yError = target.getY() - currentPose.getY();
-        double thetaError = target.getRotation().minus(currentPose.getRotation()).getRadians();
+    //     // Calculate errors
+    //     double xError = target.getX() - currentPose.getX();
+    //     double yError = target.getY() - currentPose.getY();
+    //     double thetaError = target.getRotation().minus(currentPose.getRotation()).getRadians();
 
-        // PID calculations
-        double xControl = pathXController.calculate(currentPose.getX(), target.getX());
-        double yControl = pathYController.calculate(currentPose.getY(), target.getY());
-        double thetaControl = pathThetaController.calculate(currentPose.getRotation().getRadians(), target.getRotation().getRadians());
+    //     // PID calculations
+    //     double xControl = pathXController.calculate(currentPose.getX(), target.getX());
+    //     double yControl = pathYController.calculate(currentPose.getY(), target.getY());
+    //     double thetaControl = pathThetaController.calculate(currentPose.getRotation().getRadians(), target.getRotation().getRadians());
 
-        // Clamp speeds to max values
-        double vx = Math.max(Math.min(xControl, maxLinearSpeed), -maxLinearSpeed);
-        double vy = Math.max(Math.min(yControl, maxLinearSpeed), -maxLinearSpeed);
-        double omega = Math.max(Math.min(thetaControl, maxAngularSpeed), -maxAngularSpeed);
+    //     // Clamp speeds to max values
+    //     double vx = Math.max(Math.min(xControl, maxLinearSpeed), -maxLinearSpeed);
+    //     double vy = Math.max(Math.min(yControl, maxLinearSpeed), -maxLinearSpeed);
+    //     double omega = Math.max(Math.min(thetaControl, maxAngularSpeed), -maxAngularSpeed);
 
-        // Build field-centric request
-        setControl(pathFieldSpeedsRequest.withSpeeds(new ChassisSpeeds(vx, vy, omega)));
+    //     // Build field-centric request
+    //     setControl(pathFieldSpeedsRequest.withSpeeds(new ChassisSpeeds(vx, vy, omega)));
 
-        // Optionally, stop if within tolerance (for blocking use)
-        if (Math.abs(xError) < positionTolerance &&
-            Math.abs(yError) < positionTolerance &&
-            Math.abs(thetaError) < angleTolerance) {
-            setControl(pathFieldSpeedsRequest.withSpeeds(new ChassisSpeeds(0, 0, 0)));
-        }
-    }
+    //     // Optionally, stop if within tolerance (for blocking use)
+    //     if (Math.abs(xError) < positionTolerance &&
+    //         Math.abs(yError) < positionTolerance &&
+    //         Math.abs(thetaError) < angleTolerance) {
+    //         setControl(pathFieldSpeedsRequest.withSpeeds(new ChassisSpeeds(0, 0, 0)));
+    //     }
+    // }
 
-    public boolean isNearZeroVelocity() {
+    // public boolean isNearZeroVelocity() {
 
-        ChassisSpeeds speeds = getState().Speeds;
+    //     ChassisSpeeds speeds = getState().Speeds;
 
-        double ax = (speeds.vxMetersPerSecond - previousSpeeds.vxMetersPerSecond) / 0.02;
-        double ay = (speeds.vyMetersPerSecond - previousSpeeds.vyMetersPerSecond) / 0.02;
-        double alpha = (speeds.omegaRadiansPerSecond - previousSpeeds.omegaRadiansPerSecond) / 0.02;
+    //     double ax = (speeds.vxMetersPerSecond - previousSpeeds.vxMetersPerSecond) / 0.02;
+    //     double ay = (speeds.vyMetersPerSecond - previousSpeeds.vyMetersPerSecond) / 0.02;
+    //     double alpha = (speeds.omegaRadiansPerSecond - previousSpeeds.omegaRadiansPerSecond) / 0.02;
 
-        previousSpeeds = speeds;
+    //     previousSpeeds = speeds;
 
-        boolean lowVelocity =
-                Math.abs(speeds.vxMetersPerSecond) < kTranslationalThreshold &&
-                Math.abs(speeds.vyMetersPerSecond) < kTranslationalThreshold &&
-                Math.abs(speeds.omegaRadiansPerSecond) < kRotationalThreshold;
+    //     boolean lowVelocity =
+    //             Math.abs(speeds.vxMetersPerSecond) < kTranslationalThreshold &&
+    //             Math.abs(speeds.vyMetersPerSecond) < kTranslationalThreshold &&
+    //             Math.abs(speeds.omegaRadiansPerSecond) < kRotationalThreshold;
 
-        boolean lowAcceleration =
-                Math.abs(ax) < 0.5 &&
-                Math.abs(ay) < 0.5 &&
-                Math.abs(alpha) < 1.0;
+    //     boolean lowAcceleration =
+    //             Math.abs(ax) < 0.5 &&
+    //             Math.abs(ay) < 0.5 &&
+    //             Math.abs(alpha) < 1.0;
 
-        if (lowVelocity && lowAcceleration) {
-            nearZeroCycleCount++;
-        } else {
-            nearZeroCycleCount = 0;
-        }
+    //     if (lowVelocity && lowAcceleration) {
+    //         nearZeroCycleCount++;
+    //     } else {
+    //         nearZeroCycleCount = 0;
+    //     }
 
-        return nearZeroCycleCount >= kSettledCyclesRequired;
-    }
+    //     return nearZeroCycleCount >= kSettledCyclesRequired;
+    // }
 }
